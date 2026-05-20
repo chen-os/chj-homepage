@@ -48,18 +48,37 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
+
   children,
-}: Readonly<{
+
+}: {
+
   children: React.ReactNode;
-}>) {
+
+}) {
+
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full font-sans antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-[#e8f0f6] text-slate-500/65">
-        {children}
-      </body>
+
+    <html lang="en">
+
+      <head>
+
+        <link rel="apple-touch-icon" sizes="180x180" href="/chj-icon-20260520.png?v=9" />
+
+        <link rel="icon" type="image/png" sizes="180x180" href="/chj-icon-20260520.png?v=9" />
+
+        <link rel="shortcut icon" href="/chj-icon-20260520.png?v=9" />
+
+        <meta name="apple-mobile-web-app-title" content="CHJ" />
+
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+
+      </head>
+
+      <body>{children}</body>
+
     </html>
+
   );
+
 }
