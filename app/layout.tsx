@@ -13,8 +13,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CHJ.JP",
-  description: "Tokyo / AI / Investment / Philosophy",
+
+  title: "CHJ",
+
+  description: "CHJ personal website",
+
+  icons: {
+    icon: "/chj-icon-20260520.png",
+    shortcut: "/chj-icon-20260520.png",
+    apple: [
+      { url: "/chj-icon-20260520.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+
+  appleWebApp: {
+
+    title: "CHJ",
+
+    capable: true,
+
+    statusBarStyle: "default",
+
+  },
+
 };
 
 export default function RootLayout({
