@@ -19,16 +19,11 @@ export const metadata: Metadata = {
   description: "CHJ personal website",
 
   icons: {
-    icon: "/chj-icon-20260520.png?v=5",
-    shortcut: "/chj-icon-20260520.png?v=5",
+    icon: "/chj-icon-20260520.png?v=10",
+    shortcut: "/chj-icon-20260520.png?v=10",
     apple: [
       {
-        url: "/apple-touch-icon.png?v=5",
-        sizes: "180x180",
-        type: "image/png",
-      },
-      {
-        url: "/chj-icon-20260520.png?v=5",
+        url: "/chj-icon-20260520.png?v=10",
         sizes: "180x180",
         type: "image/png",
       },
@@ -61,19 +56,19 @@ export default function RootLayout({
 
     <html lang="en">
 
-      <head>
+<head>
 
-        <link rel="apple-touch-icon" sizes="180x180" href="/chj-icon-20260520.png?v=9" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/chj-icon-20260520.png?v=10" />
 
-        <link rel="icon" type="image/png" sizes="180x180" href="/chj-icon-20260520.png?v=9" />
+  <link rel="icon" type="image/png" sizes="180x180" href="/chj-icon-20260520.png?v=10" />
 
-        <link rel="shortcut icon" href="/chj-icon-20260520.png?v=9" />
+  <link rel="shortcut icon" href="/chj-icon-20260520.png?v=10" />
 
-        <meta name="apple-mobile-web-app-title" content="CHJ" />
+  <meta name="apple-mobile-web-app-title" content="CHJ" />
 
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
 
-      </head>
+</head>
 
       <body>{children}</body>
 
