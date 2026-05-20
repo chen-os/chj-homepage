@@ -19,10 +19,19 @@ export const metadata: Metadata = {
   description: "CHJ personal website",
 
   icons: {
-    icon: "/chj-icon-20260520.png",
-    shortcut: "/chj-icon-20260520.png",
+    icon: "/chj-icon-20260520.png?v=5",
+    shortcut: "/chj-icon-20260520.png?v=5",
     apple: [
-      { url: "/chj-icon-20260520.png", sizes: "180x180", type: "image/png" },
+      {
+        url: "/apple-touch-icon.png?v=5",
+        sizes: "180x180",
+        type: "image/png",
+      },
+      {
+        url: "/chj-icon-20260520.png?v=5",
+        sizes: "180x180",
+        type: "image/png",
+      },
     ],
   },
 
