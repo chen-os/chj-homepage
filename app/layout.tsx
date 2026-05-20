@@ -13,67 +13,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-
   title: "CHJ",
-
   description: "CHJ personal website",
-
-  icons: {
-    icon: "/chj-icon-20260520.png?v=10",
-    shortcut: "/chj-icon-20260520.png?v=10",
-    apple: [
-      {
-        url: "/chj-icon-20260520.png?v=10",
-        sizes: "180x180",
-        type: "image/png",
-      },
-    ],
-  },
-
   appleWebApp: {
-
     title: "CHJ",
-
     capable: true,
-
     statusBarStyle: "default",
-
   },
-
 };
 
 export default function RootLayout({
-
   children,
-
 }: {
-
   children: React.ReactNode;
-
 }) {
-
   return (
-
     <html lang="en">
-
-<head>
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/chj-icon-20260520.png?v=10" />
-
-  <link rel="icon" type="image/png" sizes="180x180" href="/chj-icon-20260520.png?v=10" />
-
-  <link rel="shortcut icon" href="/chj-icon-20260520.png?v=10" />
-
-  <meta name="apple-mobile-web-app-title" content="CHJ" />
-
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-
-</head>
-
       <body>{children}</body>
-
     </html>
-
   );
-
 }
