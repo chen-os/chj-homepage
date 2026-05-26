@@ -47,7 +47,7 @@ export function PonyGrowthChart({ data }: PonyGrowthChartProps) {
               fontSize: 12,
               boxShadow: "none",
             }}
-            formatter={(value) => [`${value} kg`, "体重"]}
+            formatter={(value) => [`${value} kg`, "Weight"]}
             labelFormatter={(_, payload) =>
               (payload?.[0]?.payload as WeightPoint | undefined)?.date ?? ""
             }

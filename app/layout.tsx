@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CHJ",
-  description: "CHJ Personal Dashboard",
+  title: "CHJ — AI Voice Translator",
+  description: "Natural real-time translation for daily life in Japan.",
   appleWebApp: {
     title: "CHJ",
     capable: true,
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#fafafa",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -36,10 +36,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="zh-CN"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
     >
-      <body className="min-h-full font-sans antialiased">{children}</body>
+      <body className="min-h-full bg-white font-sans text-neutral-900 antialiased">
+        {children}
+      </body>
     </html>
   );
 }
