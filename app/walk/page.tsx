@@ -1,5 +1,5 @@
-import { PonyWalkLog } from "../components/pony-walk-log";
+import { redirect } from "next/navigation";
 
 export default function WalkPage() {
-  return <PonyWalkLog />;
+  redirect("/pony");
 }

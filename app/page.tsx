@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import { ChjControlCenter } from "./components/chj-control-center";
+import { ChjHome } from "./components/chj-home";
 import { PonyWalkLog } from "./components/pony-walk-log";
 
 function normalizeHost(host: string): string {
@@ -30,24 +30,5 @@ export default async function Home() {
     return <PonyWalkLog />;
   }
 
-  return (
-    <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col bg-white px-6 pb-8 pt-[max(2rem,env(safe-area-inset-top))] sm:max-w-lg">
-      <div className="flex flex-1 flex-col justify-center">
-        <h1 className="mt-4 text-[1.75rem] font-light leading-tight tracking-tight text-neutral-900 sm:text-3xl">
-          CHJ
-        </h1>
-
-        <Link
-          href="https://pony.chj.jp"
-          className="mt-8 inline-flex w-full items-center justify-center rounded-lg border border-neutral-900 bg-neutral-900 px-6 py-3.5 text-[13px] font-medium tracking-wide text-white sm:w-auto sm:min-w-[220px]"
-        >
-          Pony Life Dashboard
-        </Link>
-      </div>
-
-      <footer className="mt-12 text-center text-[10px] tracking-wide text-neutral-300">
-        CHJ © 2026
-      </footer>
-    </main>
-  );
+  return <ChjHome />;
 }

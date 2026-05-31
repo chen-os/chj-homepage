@@ -81,9 +81,11 @@ export const mockControlCenterData: ControlCenterData = {
     },
   ],
   projects: [
-    { id: "chj-home", label: "CHJ Home", href: "https://chj.jp" },
-    { id: "pony", label: "Pony Dashboard", href: "https://pony.chj.jp" },
-    { id: "car", label: "Car Dashboard", href: null, comingSoon: true },
-    { id: "finance", label: "Finance Dashboard", href: null, comingSoon: true },
+    { id: "chj-home", label: "CHJ Home", href: "/" },
+    { id: "pony", label: "Pony Dashboard", href: "/pony" },
+    { id: "car", label: "Car Dashboard", href: "/car" },
+    { id: "finance", label: "Finance Dashboard", href: "/finance", comingSoon: true },
+    { id: "family", label: "Family Dashboard", href: "/family", comingSoon: true },
+    { id: "translate", label: "Translate", href: "/translate" },
   ],
 };
