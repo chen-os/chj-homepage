@@ -1,9 +1,19 @@
 import Link from "next/link";
 import { headers } from "next/headers";
+import { ChjControlCenter } from "./components/chj-control-center";
 import { PonyWalkLog } from "./components/pony-walk-log";
 
+function normalizeHost(host: string): string {
+  return host.split(":")[0].toLowerCase();
+}
+
+function isAdminHost(host: string): boolean {
+  const normalized = normalizeHost(host);
+  return normalized === "admin.chj.jp" || normalized.startsWith("admin.");
+}
+
 function isPonyHost(host: string): boolean {
-  const normalized = host.split(":")[0].toLowerCase();
+  const normalized = normalizeHost(host);
   return normalized === "pony.chj.jp" || normalized.startsWith("pony.");
 }
 
@@ -11,6 +21,10 @@ export default async function Home() {
   const headersList = await headers();
   const host =
     headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "";
+
+  if (isAdminHost(host)) {
+    return <ChjControlCenter />;
+  }
 
   if (isPonyHost(host)) {
     return <PonyWalkLog />;
@@ -27,7 +41,7 @@ export default async function Home() {
           href="https://pony.chj.jp"
           className="mt-8 inline-flex w-full items-center justify-center rounded-lg border border-neutral-900 bg-neutral-900 px-6 py-3.5 text-[13px] font-medium tracking-wide text-white sm:w-auto sm:min-w-[220px]"
         >
-          Pony Walk Log
+          Pony Life Dashboard
         </Link>
       </div>
 

@@ -19,26 +19,27 @@ type WalkLog = {
   pee: boolean;
   poop: boolean;
   memo: string;
+  source?: "gps" | "manual";
 };
 
 const STORAGE_KEY = "pony-walk-logs-v1";
 const WEIGHT_KG = 91;
+const CALORIE_FACTOR = 0.75;
 const TOKYO_CENTER: LatLngExpression = [35.6812, 139.7671];
 
-function formatDuration(seconds: number): string {
+function formatDurationJa(seconds: number): string {
   const total = Math.max(0, Math.floor(seconds));
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m ${s}s`;
+  if (h > 0) return `${h}時間${m}分`;
+  return `${m}分`;
 }
 
-function formatTime(value: string | undefined): string {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
+function formatDateJa(value: string): string {
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   }).format(new Date(value));
 }
 
@@ -48,6 +49,19 @@ function localDateKey(value: string | number | Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function todayInputValue(): string {
+  return localDateKey(new Date());
+}
+
+function calcAvgSpeedKmh(distanceKm: number, durationSec: number): number {
+  if (durationSec <= 0) return 0;
+  return distanceKm / (durationSec / 3600);
+}
+
+function calcCalories(distanceKm: number): number {
+  return distanceKm * WEIGHT_KG * CALORIE_FACTOR;
 }
 
 function distanceBetween(a: RoutePoint, b: RoutePoint): number {
@@ -88,8 +102,14 @@ export function PonyWalkLog() {
   const [elapsedSec, setElapsedSec] = useState(0);
   const [pee, setPee] = useState(false);
   const [poop, setPoop] = useState(false);
-  const [memo, setMemo] = useState("");
+  const [walkMemo, setWalkMemo] = useState("");
   const [error, setError] = useState("");
+  const [currentLocation, setCurrentLocation] = useState<RoutePoint | null>(null);
+
+  const [formDate, setFormDate] = useState(todayInputValue);
+  const [formDistance, setFormDistance] = useState("");
+  const [formMinutes, setFormMinutes] = useState("");
+  const [formMemo, setFormMemo] = useState("");
 
   const mapElRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
@@ -140,11 +160,66 @@ export function PonyWalkLog() {
   }, []);
 
   useEffect(() => {
+    if (!("geolocation" in navigator)) {
+      setError("散歩を記録するには位置情報の許可が必要です。");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          timestamp: position.timestamp,
+        });
+      },
+      (geoError) => {
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setError("散歩を記録するには位置情報の許可が必要です。");
+          return;
+        }
+        setError("現在地を取得できませんでした。");
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
+    );
+  }, []);
+
+  useEffect(() => {
+    async function updateCurrentLocationOnMap() {
+      const map = mapRef.current;
+      if (!map || !currentLocation) return;
+      const L = await import("leaflet");
+      const latLng: LatLngExpression = [currentLocation.lat, currentLocation.lng];
+
+      if (!markerRef.current) {
+        markerRef.current = L.circleMarker(latLng, {
+          radius: 6,
+          color: "#171717",
+          fillColor: "#171717",
+          fillOpacity: 1,
+          weight: 1,
+        }).addTo(map);
+      } else {
+        markerRef.current.setLatLng(latLng);
+      }
+
+      map.setView(latLng, Math.max(map.getZoom(), 16));
+    }
+
+    void updateCurrentLocationOnMap();
+  }, [currentLocation]);
+
+  useEffect(() => {
     async function updateMap() {
       const map = mapRef.current;
       if (!map) return;
       const L = await import("leaflet");
       const points = route.map((point) => [point.lat, point.lng] as LatLngExpression);
+
+      if (points.length === 0) {
+        lineRef.current?.setLatLngs([]);
+        return;
+      }
 
       if (!lineRef.current) {
         lineRef.current = L.polyline(points, {
@@ -154,28 +229,6 @@ export function PonyWalkLog() {
         }).addTo(map);
       } else {
         lineRef.current.setLatLngs(points);
-      }
-
-      const last = route.at(-1);
-      if (!last) return;
-
-      const lastLatLng: LatLngExpression = [last.lat, last.lng];
-      if (!markerRef.current) {
-        markerRef.current = L.circleMarker(lastLatLng, {
-          radius: 6,
-          color: "#171717",
-          fillColor: "#171717",
-          fillOpacity: 1,
-          weight: 1,
-        }).addTo(map);
-      } else {
-        markerRef.current.setLatLng(lastLatLng);
-      }
-
-      if (route.length === 1) {
-        map.setView(lastLatLng, 16);
-      } else {
-        map.fitBounds(L.latLngBounds(points), { padding: [24, 24], maxZoom: 17 });
       }
     }
 
@@ -191,18 +244,23 @@ export function PonyWalkLog() {
     const completedDuration = todayLogs.reduce((sum, log) => sum + log.durationSec, 0);
     const distanceKm = completedDistance + (isWalking ? currentDistanceKm : 0);
     const durationSec = completedDuration + (isWalking ? elapsedSec : 0);
-    const avgSpeed = durationSec > 0 ? distanceKm / (durationSec / 3600) : 0;
-    const lastWalk = todayLogs.at(-1);
+    const avgSpeed = calcAvgSpeedKmh(distanceKm, durationSec);
 
     return {
       distanceKm,
       durationSec,
       avgSpeed,
-      calories: WEIGHT_KG * distanceKm * 0.8,
-      walkCount: todayLogs.length + (isWalking ? 1 : 0),
-      lastWalkTime: lastWalk ? formatTime(lastWalk.endedAt) : "—",
+      calories: calcCalories(distanceKm),
     };
   }, [currentDistanceKm, elapsedSec, isWalking, logs]);
+
+  const recentLogs = useMemo(
+    () =>
+      [...logs].sort(
+        (a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
+      ),
+    [logs],
+  );
 
   const clearWatch = useCallback(() => {
     if (watchIdRef.current !== null) {
@@ -229,14 +287,14 @@ export function PonyWalkLog() {
     setError("");
 
     if (!("geolocation" in navigator)) {
-      setError("GPS is not available on this device.");
+      setError("この端末では位置情報を利用できません。");
       return;
     }
 
     setRoute([]);
     setPee(false);
     setPoop(false);
-    setMemo("");
+    setWalkMemo("");
     setElapsedSec(0);
     setIsWalking(true);
     const started = Date.now();
@@ -253,16 +311,17 @@ export function PonyWalkLog() {
           lng: position.coords.longitude,
           timestamp: position.timestamp,
         };
+        setCurrentLocation(nextPoint);
         setRoute((prev) => [...prev, nextPoint]);
       },
       (geoError) => {
-        setError(geoError.message || "Unable to track GPS.");
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setError("散歩を記録するには位置情報の許可が必要です。");
+          return;
+        }
+        setError("GPS の追跡に失敗しました。");
       },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 0,
-        timeout: 15000,
-      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
     );
   }, []);
 
@@ -285,14 +344,60 @@ export function PonyWalkLog() {
       route,
       pee,
       poop,
-      memo: memo.trim(),
+      memo: walkMemo.trim(),
+      source: "gps",
     };
 
     setLogs((prev) => [...prev, nextLog]);
     setIsWalking(false);
     setStartedAt(null);
     setElapsedSec(durationSec);
-  }, [clearTimer, clearWatch, isWalking, memo, pee, poop, route, startedAt]);
+  }, [clearTimer, clearWatch, isWalking, pee, poop, route, startedAt, walkMemo]);
+
+  const submitManualLog = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+
+    const distanceKm = Number(formDistance);
+    const minutes = Number(formMinutes);
+
+    if (!formDate) {
+      setError("日付を入力してください。");
+      return;
+    }
+    if (!Number.isFinite(distanceKm) || distanceKm <= 0) {
+      setError("距離を正しく入力してください。");
+      return;
+    }
+    if (!Number.isFinite(minutes) || minutes <= 0) {
+      setError("時間を正しく入力してください。");
+      return;
+    }
+
+    const durationSec = Math.round(minutes * 60);
+    const startedAtIso = new Date(`${formDate}T12:00:00`).toISOString();
+    const endedAtIso = new Date(
+      new Date(`${formDate}T12:00:00`).getTime() + durationSec * 1000,
+    ).toISOString();
+
+    const nextLog: WalkLog = {
+      id: String(Date.now()),
+      startedAt: startedAtIso,
+      endedAt: endedAtIso,
+      durationSec,
+      distanceKm,
+      route: [],
+      pee: false,
+      poop: false,
+      memo: formMemo.trim(),
+      source: "manual",
+    };
+
+    setLogs((prev) => [...prev, nextLog]);
+    setFormDistance("");
+    setFormMinutes("");
+    setFormMemo("");
+  };
 
   return (
     <main className="mx-auto min-h-[100dvh] max-w-md bg-white px-5 pb-8 pt-[max(1.25rem,env(safe-area-inset-top))] sm:max-w-lg">
@@ -302,18 +407,18 @@ export function PonyWalkLog() {
             PONY.CHJ.JP
           </p>
           <h1 className="mt-2 text-3xl font-light tracking-tight text-neutral-900">
-            Pony Walk Log
+            Pony Life Dashboard
           </h1>
         </div>
         <p className="text-right text-[10px] leading-relaxed text-neutral-400">
-          Weight
+          体重
           <br />
           {WEIGHT_KG} kg
         </p>
       </header>
 
       <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
-        <div ref={mapElRef} className="h-[280px] w-full" />
+        <div ref={mapElRef} className="h-[240px] w-full" />
       </section>
 
       {error ? (
@@ -323,23 +428,34 @@ export function PonyWalkLog() {
       ) : null}
 
       <section className="mt-4 grid grid-cols-2 gap-2">
-        <Metric label="Today distance" value={`${todayStats.distanceKm.toFixed(2)} km`} />
-        <Metric label="Today duration" value={formatDuration(todayStats.durationSec)} />
-        <Metric label="Average speed" value={`${todayStats.avgSpeed.toFixed(1)} km/h`} />
-        <Metric label="Calories" value={`${Math.round(todayStats.calories)} kcal`} />
-        <Metric label="Walk count" value={String(todayStats.walkCount)} />
-        <Metric label="Last walk" value={todayStats.lastWalkTime} />
+        <Metric
+          label="今日の散歩距離"
+          value={`${todayStats.distanceKm.toFixed(2)} km`}
+        />
+        <Metric
+          label="今日の散歩時間"
+          value={formatDurationJa(todayStats.durationSec)}
+        />
+        <Metric
+          label="平均速度"
+          value={`${todayStats.avgSpeed.toFixed(1)} km/h`}
+        />
+        <Metric
+          label="消費カロリー"
+          value={`${Math.round(todayStats.calories)} kcal`}
+        />
       </section>
 
       <section className="mt-4 rounded-2xl border border-neutral-200 bg-white px-4 py-4">
-        <div className="flex gap-2">
+        <p className="text-[10px] tracking-wide text-neutral-400">GPS 散歩記録</p>
+        <div className="mt-3 flex gap-2">
           <button
             type="button"
             onClick={startWalk}
             disabled={isWalking}
             className="flex-1 rounded-xl border border-neutral-900 bg-neutral-900 py-3 text-[12px] font-medium tracking-wide text-white disabled:opacity-35"
           >
-            Start Walk
+            散歩開始
           </button>
           <button
             type="button"
@@ -347,11 +463,11 @@ export function PonyWalkLog() {
             disabled={!isWalking}
             className="flex-1 rounded-xl border border-neutral-200 py-3 text-[12px] font-medium tracking-wide text-neutral-700 disabled:opacity-35"
           >
-            End Walk
+            散歩終了
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <label className="flex items-center gap-2 rounded-xl border border-neutral-100 px-3 py-2 text-[12px] text-neutral-700">
             <input
               type="checkbox"
@@ -359,7 +475,7 @@ export function PonyWalkLog() {
               onChange={(event) => setPee(event.target.checked)}
               className="h-4 w-4 rounded border-neutral-300"
             />
-            Pee
+            おしっこ
           </label>
           <label className="flex items-center gap-2 rounded-xl border border-neutral-100 px-3 py-2 text-[12px] text-neutral-700">
             <input
@@ -368,22 +484,119 @@ export function PonyWalkLog() {
               onChange={(event) => setPoop(event.target.checked)}
               className="h-4 w-4 rounded border-neutral-300"
             />
-            Poop
+            うんち
           </label>
         </div>
 
         <label className="mt-3 block">
           <span className="mb-1.5 block text-[10px] tracking-wide text-neutral-400">
-            Memo
+            メモ
           </span>
           <textarea
-            value={memo}
-            onChange={(event) => setMemo(event.target.value)}
-            rows={3}
-            placeholder="Mood, weather, route..."
+            value={walkMemo}
+            onChange={(event) => setWalkMemo(event.target.value)}
+            rows={2}
+            placeholder="天気、様子、ルート..."
             className="w-full resize-none rounded-xl border border-neutral-100 bg-neutral-50/60 px-3 py-2 text-[12px] leading-relaxed text-neutral-800 outline-none focus:border-neutral-300"
           />
         </label>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-neutral-200 bg-white px-4 py-4">
+        <p className="text-[10px] tracking-wide text-neutral-400">散歩記録を追加</p>
+        <form className="mt-3 space-y-3" onSubmit={submitManualLog}>
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] tracking-wide text-neutral-400">
+              日付
+            </span>
+            <input
+              type="date"
+              value={formDate}
+              onChange={(event) => setFormDate(event.target.value)}
+              className="w-full rounded-xl border border-neutral-100 bg-neutral-50/60 px-3 py-2 text-[12px] text-neutral-800 outline-none focus:border-neutral-300"
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="mb-1.5 block text-[10px] tracking-wide text-neutral-400">
+                距離（km）
+              </span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formDistance}
+                onChange={(event) => setFormDistance(event.target.value)}
+                placeholder="1.2"
+                className="w-full rounded-xl border border-neutral-100 bg-neutral-50/60 px-3 py-2 text-[12px] text-neutral-800 outline-none focus:border-neutral-300"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1.5 block text-[10px] tracking-wide text-neutral-400">
+                時間（分）
+              </span>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={formMinutes}
+                onChange={(event) => setFormMinutes(event.target.value)}
+                placeholder="25"
+                className="w-full rounded-xl border border-neutral-100 bg-neutral-50/60 px-3 py-2 text-[12px] text-neutral-800 outline-none focus:border-neutral-300"
+              />
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="mb-1.5 block text-[10px] tracking-wide text-neutral-400">
+              メモ
+            </span>
+            <textarea
+              value={formMemo}
+              onChange={(event) => setFormMemo(event.target.value)}
+              rows={2}
+              placeholder="公園、雨上がり、元気..."
+              className="w-full resize-none rounded-xl border border-neutral-100 bg-neutral-50/60 px-3 py-2 text-[12px] leading-relaxed text-neutral-800 outline-none focus:border-neutral-300"
+            />
+          </label>
+
+          <button
+            type="submit"
+            className="w-full rounded-xl border border-neutral-900 bg-neutral-900 py-3 text-[12px] font-medium tracking-wide text-white"
+          >
+            記録する
+          </button>
+        </form>
+      </section>
+
+      <section className="mt-4 rounded-2xl border border-neutral-200 bg-white px-4 py-4">
+        <p className="text-[10px] tracking-wide text-neutral-400">最近の散歩記録</p>
+        {recentLogs.length === 0 ? (
+          <p className="mt-3 text-[12px] text-neutral-400">まだ記録がありません。</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {recentLogs.slice(0, 8).map((log) => {
+              const speed = calcAvgSpeedKmh(log.distanceKm, log.durationSec);
+              const calories = calcCalories(log.distanceKm);
+              return (
+                <li
+                  key={log.id}
+                  className="rounded-xl border border-neutral-100 px-3 py-3 text-[11px] leading-relaxed text-neutral-600"
+                >
+                  <p className="font-medium text-neutral-900">
+                    {formatDateJa(log.startedAt)}
+                  </p>
+                  <p className="mt-1">
+                    {log.distanceKm.toFixed(2)} km · {formatDurationJa(log.durationSec)} ·
+                    平均 {speed.toFixed(1)} km/h · {Math.round(calories)} kcal
+                  </p>
+                  {log.memo ? <p className="mt-1 text-neutral-400">{log.memo}</p> : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
 
       <footer className="mt-8 text-center text-[10px] tracking-wide text-neutral-300">
