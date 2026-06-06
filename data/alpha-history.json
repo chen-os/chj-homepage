@@ -1,0 +1,86 @@
+{
+  "history": [
+    {
+      "date": "2026-06-05",
+      "trends": [
+        {
+          "name": "AI Data Center Power Demand",
+          "displayName": "AI Power",
+          "alphaScore": 75,
+          "signalStrength": "Medium",
+          "evidenceCount": 15,
+          "convictionScore": 67,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "Nuclear Fuel Cycle",
+          "displayName": "Nuclear",
+          "alphaScore": 50,
+          "signalStrength": "Medium",
+          "evidenceCount": 10,
+          "convictionScore": 67,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "Humanoid Robotics Supply Chain",
+          "displayName": "Humanoid",
+          "alphaScore": 50,
+          "signalStrength": "Medium",
+          "evidenceCount": 10,
+          "convictionScore": 67,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "AI Compute Infrastructure",
+          "displayName": "AI Compute",
+          "alphaScore": 40,
+          "signalStrength": "Low",
+          "evidenceCount": 11,
+          "convictionScore": 67,
+          "googleTrendScore": 0
+        }
+      ]
+    },
+    {
+      "date": "2026-06-06",
+      "trends": [
+        {
+          "name": "AI Data Center Power Demand",
+          "displayName": "AI Power",
+          "alphaScore": 69,
+          "signalStrength": "Medium",
+          "evidenceCount": 15,
+          "convictionScore": 47,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "Humanoid Robotics Supply Chain",
+          "displayName": "Humanoid",
+          "alphaScore": 50,
+          "signalStrength": "Medium",
+          "evidenceCount": 10,
+          "convictionScore": 40,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "Nuclear Fuel Cycle",
+          "displayName": "Nuclear",
+          "alphaScore": 44,
+          "signalStrength": "Low",
+          "evidenceCount": 10,
+          "convictionScore": 33,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "AI Compute Infrastructure",
+          "displayName": "AI Compute",
+          "alphaScore": 32,
+          "signalStrength": "Low",
+          "evidenceCount": 10,
+          "convictionScore": 18,
+          "googleTrendScore": 0
+        }
+      ]
+    }
+  ]
+}
