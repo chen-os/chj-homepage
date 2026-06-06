@@ -34,8 +34,64 @@ export class StorageWriteError extends Error {
 const LOCAL_DATA_DIR = path.join(process.cwd(), "data");
 const BLOB_ACCESS = "private" as const;
 
+export type StorageEnvStatus = {
+  hasBlobReadWriteToken: boolean;
+  hasBlobStoreId: boolean;
+  hasBlobWebhookPublicKey: boolean;
+};
+
+function envFlag(name: string): boolean {
+  const value = process.env[name];
+  return typeof value === "string" && value.trim() !== "";
+}
+
+export function getStorageEnvStatus(): StorageEnvStatus {
+  return {
+    hasBlobReadWriteToken: envFlag("BLOB_READ_WRITE_TOKEN"),
+    hasBlobStoreId: envFlag("BLOB_STORE_ID"),
+    hasBlobWebhookPublicKey: envFlag("BLOB_WEBHOOK_PUBLIC_KEY"),
+  };
+}
+
+/**
+ * Matches @vercel/blob resolveBlobAuth (v2.4):
+ * - BLOB_READ_WRITE_TOKEN, or
+ * - BLOB_STORE_ID + VERCEL_OIDC_TOKEN / Vercel runtime OIDC (VERCEL=1)
+ */
+export function hasBlobEnv(): boolean {
+  if (envFlag("BLOB_READ_WRITE_TOKEN")) {
+    return true;
+  }
+
+  if (!envFlag("BLOB_STORE_ID")) {
+    return false;
+  }
+
+  if (envFlag("VERCEL_OIDC_TOKEN")) {
+    return true;
+  }
+
+  return process.env.VERCEL === "1";
+}
+
 export function getStorageMode(): StorageMode {
-  return process.env.BLOB_READ_WRITE_TOKEN ? "blob" : "local";
+  return hasBlobEnv() ? "blob" : "local";
+}
+
+export function getStorageWarning(): string | undefined {
+  if (getStorageMode() === "blob") {
+    return undefined;
+  }
+
+  const env = getStorageEnvStatus();
+  if (
+    (env.hasBlobStoreId || env.hasBlobWebhookPublicKey) &&
+    !env.hasBlobReadWriteToken
+  ) {
+    return "BLOB_READ_WRITE_TOKEN is missing";
+  }
+
+  return undefined;
 }
 
 function localFilePath(key: string): string {
@@ -181,10 +237,15 @@ export async function inspectStorageKeys(): Promise<StorageKeyHealth[]> {
 
 export async function getStorageHealthResponse(): Promise<{
   mode: StorageMode;
+  env: StorageEnvStatus;
   keys: StorageKeyHealth[];
+  warning?: string;
 }> {
+  const warning = getStorageWarning();
   return {
     mode: getStorageMode(),
+    env: getStorageEnvStatus(),
     keys: await inspectStorageKeys(),
+    ...(warning ? { warning } : {}),
   };
 }
