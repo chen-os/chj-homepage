@@ -17,7 +17,22 @@ import {
   type TrendLeaderboardEntry,
 } from "./theme-momentum-engine";
 import { appendDailyThemeRotation } from "./theme-rotation";
+import {
+  buildThemeStockPerformanceFile,
+  saveThemeStockPerformance,
+} from "./theme-stock-performance";
+import {
+  buildThemeDivergenceReport,
+  type AlphaOpportunity,
+  type ThemeDivergence,
+} from "./theme-divergence-engine";
+import {
+  buildTrendLifecycles,
+  type TrendLifecycle,
+} from "./trend-lifecycle-engine";
+import { buildThemeWinners, type ThemeWinner } from "./theme-winners-engine";
 import { getOrCreateWatchlistSnapshot } from "./watchlist-snapshot";
+import { loadWatchlistHistory } from "./watchlist-history";
 import { StorageWriteError } from "./storage";
 
 const KEYWORDS = [
@@ -50,6 +65,10 @@ export type DailyReport = {
   trendConfirmations: TrendConfirmation[];
   themeMomentum: ThemeMomentum[];
   trendLeaderboard: TrendLeaderboardEntry[];
+  themeWinners: ThemeWinner[];
+  trendLifecycles: TrendLifecycle[];
+  themeDivergence: ThemeDivergence[];
+  alphaOpportunities: AlphaOpportunity[];
 };
 
 export function getAlphaReportDate(timeZone = "Asia/Tokyo"): string {
@@ -172,7 +191,24 @@ export async function buildDailyReport(
     const history = await appendTodaySnapshot(date, themeSnapshots);
     const themeMomentum = buildThemeMomentum(history, date, trendConfirmations);
     const trendLeaderboard = buildTrendLeaderboard(themeMomentum);
-    const watchlistSnapshot = await getOrCreateWatchlistSnapshot(date);
+    const trendLifecycles = buildTrendLifecycles(
+      trendConfirmations,
+      themeMomentum,
+      trends,
+    );
+    const { themeDivergence, alphaOpportunities } =
+      await buildThemeDivergenceReport(trendLifecycles);
+    const [watchlistSnapshot, watchlistHistory] = await Promise.all([
+      getOrCreateWatchlistSnapshot(date),
+      loadWatchlistHistory(),
+    ]);
+    const themeWinners = buildThemeWinners(
+      trends,
+      watchlistHistory,
+      date,
+      trendConfirmations,
+    );
+    await saveThemeStockPerformance(buildThemeStockPerformanceFile(themeWinners));
 
     await syncDailyBacktest(
       {
@@ -193,6 +229,10 @@ export async function buildDailyReport(
       trendConfirmations,
       themeMomentum,
       trendLeaderboard,
+      themeWinners,
+      trendLifecycles,
+      themeDivergence,
+      alphaOpportunities,
     };
   } catch (error) {
     if (error instanceof StorageWriteError) {

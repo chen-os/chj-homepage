@@ -78,6 +78,105 @@ type TrendLeaderboardItem = {
   increaseLabel: string;
 };
 
+type ThemeDivergenceItem = {
+  themeName: string;
+  displayName: string;
+  themeStrength: number;
+  basketReturn5D: number | null;
+  basketReturn20D: number | null;
+  basketReturn5DLabel: string;
+  basketReturn20DLabel: string;
+  divergenceScore: number | null;
+  themeRank: number;
+  stockRank5D: number;
+  stockRank20D: number;
+  relativeDivergence: number;
+  lifecycleStage:
+    | "Accelerating"
+    | "Emerging"
+    | "Peak"
+    | "Cooling"
+    | "Decelerating"
+    | "Failed Breakout"
+    | "Dormant";
+  alphaOpportunityScore: number;
+  divergenceStatus:
+    | "UNDEROWNED"
+    | "CONFIRMED"
+    | "OVEREXTENDED"
+    | "WEAK"
+    | "NEUTRAL";
+  actionHint: string;
+};
+
+type AlphaOpportunityItem = {
+  themeName: string;
+  displayName: string;
+  alphaOpportunityScore: number;
+  divergenceStatus:
+    | "UNDEROWNED"
+    | "CONFIRMED"
+    | "OVEREXTENDED"
+    | "WEAK"
+    | "NEUTRAL";
+  themeRank: number;
+  stockRank5D: number;
+  lifecycleStage:
+    | "Accelerating"
+    | "Emerging"
+    | "Peak"
+    | "Cooling"
+    | "Decelerating"
+    | "Failed Breakout"
+    | "Dormant";
+  actionHint: string;
+};
+
+type TrendLifecycleItem = {
+  themeName: string;
+  displayName: string;
+  alphaScore: number;
+  convictionScore: number;
+  convictionChange7Day: number;
+  convictionChangeLabel: string;
+  trendAgeDays: number;
+  lifecycleStage:
+    | "Accelerating"
+    | "Emerging"
+    | "Peak"
+    | "Cooling"
+    | "Decelerating"
+    | "Failed Breakout"
+    | "Dormant";
+  lifecycleReason: string;
+  actionHint: string;
+};
+
+type ThemeWinnerItem = {
+  themeName: string;
+  displayName: string;
+  avgReturn7D: number | null;
+  avgReturn7DLabel: string;
+  topPerformer: {
+    ticker: string;
+    change7D: number;
+  } | null;
+  worstPerformer: {
+    ticker: string;
+    change7D: number;
+  } | null;
+  confirmationLevel:
+    | "Strong Confirmation"
+    | "Divergence"
+    | "Late Stage"
+    | "Neutral";
+  stocks: Array<{
+    ticker: string;
+    change7D: number | null;
+    change7DLabel: string;
+  }>;
+};
+
 type StockPerformanceItem = {
   ticker: string;
   change1Day: number | null;
@@ -116,6 +215,10 @@ type DailyReport = {
   trendConfirmations?: TrendConfirmationItem[];
   themeMomentum?: ThemeMomentumItem[];
   trendLeaderboard?: TrendLeaderboardItem[];
+  themeWinners?: ThemeWinnerItem[];
+  trendLifecycles?: TrendLifecycleItem[];
+  themeDivergence?: ThemeDivergenceItem[];
+  alphaOpportunities?: AlphaOpportunityItem[];
 };
 
 type FetchState =
@@ -340,6 +443,10 @@ export function ChjAlphaDashboard({
   );
   const themeMomentum = report?.themeMomentum ?? [];
   const trendLeaderboard = report?.trendLeaderboard ?? [];
+  const themeWinners = report?.themeWinners ?? [];
+  const trendLifecycles = report?.trendLifecycles ?? [];
+  const themeDivergence = report?.themeDivergence ?? [];
+  const alphaOpportunities = report?.alphaOpportunities ?? [];
   const themePerformance =
     watchlistState.status === "success"
       ? watchlistState.snapshot.themePerformance
@@ -824,6 +931,189 @@ export function ChjAlphaDashboard({
         )}
       </Section>
 
+      <Section title="Trend Lifecycle">
+        {fetchState.status === "loading" ? (
+          <p className="text-[12px] text-neutral-500">Loading Alpha Signals...</p>
+        ) : fetchState.status === "error" ? (
+          <p className="text-[12px] text-neutral-500">Failed to load alpha report</p>
+        ) : trendLifecycles.length === 0 ? (
+          <p className="text-[12px] text-neutral-500">
+            Trend lifecycle stages will appear once conviction history accumulates.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {trendLifecycles.map((item) => (
+              <li
+                key={item.themeName}
+                className="rounded-xl border border-neutral-100 px-3 py-3"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[12px] font-medium text-neutral-900">
+                      {item.displayName}
+                    </p>
+                    <div className="mt-1">
+                      <StatusPill label={item.lifecycleStage} />
+                    </div>
+                  </div>
+                  <p className="font-mono text-lg font-light text-neutral-900">
+                    {item.convictionScore}
+                  </p>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-neutral-600">
+                  <div>
+                    <p className="text-[10px] text-neutral-400">7D Change</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      {item.convictionChangeLabel}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Age</p>
+                    <p className="mt-1 text-neutral-800">
+                      {item.trendAgeDays === 1
+                        ? "1 Day"
+                        : `${item.trendAgeDays} Days`}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-3 text-[11px] text-neutral-500">{item.actionHint}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title="Top Alpha Opportunities">
+        {fetchState.status === "loading" ? (
+          <p className="text-[12px] text-neutral-500">Loading Alpha Signals...</p>
+        ) : fetchState.status === "error" ? (
+          <p className="text-[12px] text-neutral-500">Failed to load alpha report</p>
+        ) : alphaOpportunities.length === 0 ? (
+          <p className="text-[12px] text-neutral-500">
+            Alpha opportunities will appear once relative divergence data is available.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {alphaOpportunities.map((item) => (
+              <li
+                key={item.themeName}
+                className="rounded-xl border border-neutral-100 px-3 py-3"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[12px] font-medium text-neutral-900">
+                      {item.displayName}
+                    </p>
+                    <div className="mt-1">
+                      <StatusPill label={item.divergenceStatus} />
+                    </div>
+                  </div>
+                  <p className="font-mono text-lg font-light text-neutral-900">
+                    {item.alphaOpportunityScore}
+                  </p>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-neutral-600">
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Theme Rank</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      Theme #{item.themeRank}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Stock Rank</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      Stock #{item.stockRank5D}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Lifecycle</p>
+                    <p className="mt-1 text-neutral-800">{item.lifecycleStage}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Action</p>
+                    <p className="mt-1 text-neutral-800">{item.actionHint}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title="Theme Divergence">
+        {fetchState.status === "loading" ? (
+          <p className="text-[12px] text-neutral-500">Loading Alpha Signals...</p>
+        ) : fetchState.status === "error" ? (
+          <p className="text-[12px] text-neutral-500">Failed to load alpha report</p>
+        ) : themeDivergence.length === 0 ? (
+          <p className="text-[12px] text-neutral-500">
+            Theme divergence will appear once stock return data is available.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {themeDivergence.map((item) => (
+              <li
+                key={item.themeName}
+                className="rounded-xl border border-neutral-100 px-3 py-3"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[12px] font-medium text-neutral-900">
+                      {item.displayName}
+                    </p>
+                    <div className="mt-1">
+                      <StatusPill label={item.divergenceStatus} />
+                    </div>
+                  </div>
+                  <p className="font-mono text-lg font-light text-neutral-900">
+                    {item.themeStrength}
+                  </p>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] text-neutral-600">
+                  <div>
+                    <p className="text-[10px] text-neutral-400">5D Basket</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      {item.basketReturn5DLabel}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">20D Basket</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      {item.basketReturn20DLabel}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Theme Rank</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      Theme #{item.themeRank}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Stock Rank</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      Stock #{item.stockRank5D}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Relative Divergence</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      {item.relativeDivergence}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-neutral-400">Opportunity Score</p>
+                    <p className="mt-1 font-mono text-neutral-800">
+                      {item.alphaOpportunityScore}
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-3 text-[11px] text-neutral-500">{item.actionHint}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
       <Section title="Trend Leaderboard">
         {fetchState.status === "loading" ? (
           <p className="text-[12px] text-neutral-500">Loading Alpha Signals...</p>
@@ -1142,6 +1432,60 @@ export function ChjAlphaDashboard({
                     )}
                   </div>
                 </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title="Theme Winners">
+        {fetchState.status === "loading" ? (
+          <p className="text-[12px] text-neutral-500">Loading Alpha Signals...</p>
+        ) : fetchState.status === "error" ? (
+          <p className="text-[12px] text-neutral-500">Failed to load alpha report</p>
+        ) : themeWinners.length === 0 ? (
+          <p className="text-[12px] text-neutral-500">
+            Theme winners will appear once watchlist performance data is available.
+          </p>
+        ) : (
+          <ul className="space-y-4">
+            {themeWinners.map((item) => (
+              <li
+                key={item.themeName}
+                className="rounded-2xl border border-neutral-200 px-4 py-4"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[13px] font-medium text-neutral-900">
+                      {item.displayName}
+                    </p>
+                    <div className="mt-1">
+                      <StatusPill label={item.confirmationLevel} />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono text-lg font-light text-neutral-900">
+                      {item.avgReturn7DLabel}
+                    </p>
+                    <p className="text-[10px] text-neutral-400">7D Return</p>
+                  </div>
+                </div>
+
+                <ul className="mt-3 space-y-1.5 rounded-xl border border-neutral-100 px-3 py-3">
+                  {item.stocks.map((stock) => (
+                    <li
+                      key={stock.ticker}
+                      className="flex items-center justify-between font-mono text-[12px] text-neutral-800"
+                    >
+                      <span>{stock.ticker}</span>
+                      <span>{stock.change7DLabel}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-3 text-[10px] text-neutral-500">
+                  Theme Confirmation: {item.confirmationLevel}
+                </p>
               </li>
             ))}
           </ul>
