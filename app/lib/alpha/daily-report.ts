@@ -202,7 +202,7 @@ export async function buildDailyReport(
       getOrCreateWatchlistSnapshot(date),
       loadWatchlistHistory(),
     ]);
-    const themeWinners = buildThemeWinners(
+    const themeWinners = await buildThemeWinners(
       trends,
       watchlistHistory,
       date,

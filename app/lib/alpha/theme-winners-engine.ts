@@ -1,5 +1,9 @@
 import type { TrendConfirmation } from "./conviction-engine";
-import { formatPercentChange } from "./format-labels";
+import { getCachedStockReturns } from "./stock-returns";
+import {
+  loadThemeStockPerformance,
+  type ThemeStockPerformanceFile,
+} from "./theme-stock-performance";
 import { buildThemePerformance } from "./theme-performance-engine";
 import type { AlphaTrend, TrendCompany } from "./trend-engine";
 import type { WatchlistHistoryFile } from "./watchlist-history";
@@ -39,6 +43,10 @@ const DISPLAY_NAMES: Record<string, string> = {
   "AI Compute Infrastructure": "AI Compute",
 };
 
+function normalizeTicker(ticker: string): string {
+  return ticker.trim().toUpperCase();
+}
+
 function formatStockReturn7D(value: number | null): string {
   if (value === null) return "N/A";
   const rounded = Math.round(value);
@@ -73,10 +81,66 @@ function averageChange7D(values: number[]): number | null {
   return Math.round((total / values.length) * 10) / 10;
 }
 
+function findStoredPerformance(
+  performanceFile: ThemeStockPerformanceFile,
+  displayName: string,
+  themeName: string,
+) {
+  const candidateKeys = [
+    displayName,
+    DISPLAY_NAMES[themeName],
+    themeName,
+  ].filter((value, index, values) => value && values.indexOf(value) === index);
+
+  for (const key of candidateKeys) {
+    if (performanceFile[key]) {
+      return performanceFile[key];
+    }
+  }
+
+  return undefined;
+}
+
+function resolveChange7D(
+  ticker: string,
+  performanceFile: ThemeStockPerformanceFile,
+  displayName: string,
+  themeName: string,
+  liveReturns: Map<string, { return7D: number | null }>,
+  watchlistChange: number | null | undefined,
+): number | null {
+  const normalizedTicker = normalizeTicker(ticker);
+  const storedPerformance = findStoredPerformance(
+    performanceFile,
+    displayName,
+    themeName,
+  );
+  const storedStock = storedPerformance?.stocks.find(
+    (stock) => normalizeTicker(stock.ticker) === normalizedTicker,
+  );
+  if (storedStock) {
+    return storedStock.change7D;
+  }
+
+  const liveReturn = liveReturns.get(normalizedTicker)?.return7D ?? null;
+  if (liveReturn !== null) {
+    return liveReturn;
+  }
+
+  if (watchlistChange !== null && watchlistChange !== undefined) {
+    return watchlistChange;
+  }
+
+  return null;
+}
+
 function buildStocksForTheme(
   trend: AlphaTrend,
   watchlistHistory: WatchlistHistoryFile,
   todayDate: string,
+  displayName: string,
+  performanceFile: ThemeStockPerformanceFile,
+  liveReturns: Map<string, { return7D: number | null }>,
 ): ThemeWinnerStock[] {
   const performance = buildThemePerformance(watchlistHistory, todayDate).find(
     (entry) => entry.theme === trend.name,
@@ -96,7 +160,14 @@ function buildStocksForTheme(
 
   return tickers
     .map((company: TrendCompany) => {
-      const change7D = performanceByTicker.get(company.ticker) ?? null;
+      const change7D = resolveChange7D(
+        company.ticker,
+        performanceFile,
+        displayName,
+        trend.name,
+        liveReturns,
+        performanceByTicker.get(company.ticker),
+      );
       return {
         ticker: company.ticker,
         change7D,
@@ -139,13 +210,23 @@ function resolvePerformer(
   };
 }
 
-export function buildThemeWinner(
+function buildThemeWinner(
   trend: AlphaTrend,
   watchlistHistory: WatchlistHistoryFile,
   todayDate: string,
   confirmations: TrendConfirmation[],
+  performanceFile: ThemeStockPerformanceFile,
+  liveReturns: Map<string, { return7D: number | null }>,
 ): ThemeWinner {
-  const stocks = buildStocksForTheme(trend, watchlistHistory, todayDate);
+  const displayName = resolveDisplayName(trend.name, confirmations);
+  const stocks = buildStocksForTheme(
+    trend,
+    watchlistHistory,
+    todayDate,
+    displayName,
+    performanceFile,
+    liveReturns,
+  );
   const validReturns = stocks
     .map((stock) => stock.change7D)
     .filter((value): value is number => value !== null);
@@ -155,9 +236,9 @@ export function buildThemeWinner(
 
   return {
     themeName: trend.name,
-    displayName: resolveDisplayName(trend.name, confirmations),
+    displayName,
     avgReturn7D,
-    avgReturn7DLabel: formatPercentChange(avgReturn7D),
+    avgReturn7DLabel: formatStockReturn7D(avgReturn7D),
     topPerformer: resolvePerformer(stocks, "top"),
     worstPerformer: resolvePerformer(stocks, "worst"),
     confirmationLevel: resolveConfirmationLevel(themeStrength, stockStrength),
@@ -165,15 +246,32 @@ export function buildThemeWinner(
   };
 }
 
-export function buildThemeWinners(
+export async function buildThemeWinners(
   trends: AlphaTrend[],
   watchlistHistory: WatchlistHistoryFile,
   todayDate: string,
   confirmations: TrendConfirmation[] = [],
-): ThemeWinner[] {
+): Promise<ThemeWinner[]> {
+  const performanceFile = await loadThemeStockPerformance();
+  const allTickers = [
+    ...new Set(
+      trends.flatMap((trend) =>
+        trend.potentialCompanies.map((company) => company.ticker),
+      ),
+    ),
+  ];
+  const liveReturns = await getCachedStockReturns(allTickers);
+
   return [...trends]
     .sort((a, b) => b.alphaScore - a.alphaScore)
     .map((trend) =>
-      buildThemeWinner(trend, watchlistHistory, todayDate, confirmations),
+      buildThemeWinner(
+        trend,
+        watchlistHistory,
+        todayDate,
+        confirmations,
+        performanceFile,
+        liveReturns,
+      ),
     );
 }

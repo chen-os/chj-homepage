@@ -1,1 +1,94 @@
-{}
+{
+  "AI Power": {
+    "stocks": [
+      {
+        "ticker": "ETN",
+        "change7D": 0.5
+      },
+      {
+        "ticker": "VST",
+        "change7D": -7.6
+      },
+      {
+        "ticker": "LEU",
+        "change7D": -10.9
+      },
+      {
+        "ticker": "CEG",
+        "change7D": -11.1
+      },
+      {
+        "ticker": "BE",
+        "change7D": -11.9
+      }
+    ]
+  },
+  "Nuclear": {
+    "stocks": [
+      {
+        "ticker": "CCJ",
+        "change7D": -3.9
+      },
+      {
+        "ticker": "LEU",
+        "change7D": -10.9
+      },
+      {
+        "ticker": "SMR",
+        "change7D": -11.1
+      },
+      {
+        "ticker": "CEG",
+        "change7D": -11.1
+      }
+    ]
+  },
+  "Humanoid": {
+    "stocks": [
+      {
+        "ticker": "ISRG",
+        "change7D": -0.6
+      },
+      {
+        "ticker": "TER",
+        "change7D": -1.8
+      },
+      {
+        "ticker": "NVDA",
+        "change7D": -2.8
+      },
+      {
+        "ticker": "TSLA",
+        "change7D": -8.9
+      },
+      {
+        "ticker": "FANUY",
+        "change7D": -10.6
+      }
+    ]
+  },
+  "AI Compute": {
+    "stocks": [
+      {
+        "ticker": "MU",
+        "change7D": 1.7
+      },
+      {
+        "ticker": "ANET",
+        "change7D": 1.6
+      },
+      {
+        "ticker": "NVDA",
+        "change7D": -2.8
+      },
+      {
+        "ticker": "AMD",
+        "change7D": -5.7
+      },
+      {
+        "ticker": "AVGO",
+        "change7D": -7
+      }
+    ]
+  }
+}

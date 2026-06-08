@@ -1,4 +1,5 @@
 export type StockReturnSnapshot = {
+  return7D: number | null;
   return5D: number | null;
   return20D: number | null;
 };
@@ -81,13 +82,21 @@ async function fetchYahooReturns(ticker: string): Promise<StockReturnSnapshot | 
 
     if (closes.length < 6) return null;
 
-    return {
-      return5D: calculateReturnFromCloses(closes, 5),
-      return20D: calculateReturnFromCloses(closes, 20),
-    };
+    return buildReturnSnapshot(closes);
   } catch {
     return null;
   }
+}
+
+function buildReturnSnapshot(closes: number[]): StockReturnSnapshot {
+  return {
+    return7D:
+      closes.length >= 8 ? calculateReturnFromCloses(closes, 7) : null,
+    return5D:
+      closes.length >= 6 ? calculateReturnFromCloses(closes, 5) : null,
+    return20D:
+      closes.length >= 21 ? calculateReturnFromCloses(closes, 20) : null,
+  };
 }
 
 async function fetchStooqReturns(ticker: string): Promise<StockReturnSnapshot | null> {
@@ -116,10 +125,7 @@ async function fetchStooqReturns(ticker: string): Promise<StockReturnSnapshot | 
 
     if (closes.length < 6) return null;
 
-    return {
-      return5D: calculateReturnFromCloses(closes, 5),
-      return20D: calculateReturnFromCloses(closes, 20),
-    };
+    return buildReturnSnapshot(closes);
   } catch {
     return null;
   }
@@ -127,14 +133,19 @@ async function fetchStooqReturns(ticker: string): Promise<StockReturnSnapshot | 
 
 async function fetchTickerReturns(ticker: string): Promise<StockReturnSnapshot> {
   const yahoo = await fetchYahooReturns(ticker);
-  if (yahoo && (yahoo.return5D !== null || yahoo.return20D !== null)) {
+  if (
+    yahoo &&
+    (yahoo.return7D !== null ||
+      yahoo.return5D !== null ||
+      yahoo.return20D !== null)
+  ) {
     return yahoo;
   }
 
   const stooq = await fetchStooqReturns(ticker);
   if (stooq) return stooq;
 
-  return { return5D: null, return20D: null };
+  return { return7D: null, return5D: null, return20D: null };
 }
 
 export async function getCachedStockReturns(
