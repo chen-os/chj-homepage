@@ -7,6 +7,7 @@ export const ALPHA_STORAGE_KEYS = [
   "watchlist-history.json",
   "alpha-backtest.json",
   "theme-rotation-history.json",
+  "theme-stock-performance.json",
   "theme-leaders.json",
 ] as const;
 

@@ -58,26 +58,43 @@ function sortHistory(data: ThemeRotationHistoryFile): ThemeRotationHistoryFile {
 
 export async function loadThemeRotationHistory(): Promise<ThemeRotationHistoryFile> {
   const data = await readJson(STORAGE_KEY, emptyHistory());
-  return normalizeHistory(data);
+  return sortHistory(normalizeHistory(data));
+}
+
+function compareByConviction(
+  a: Pick<TrendConfirmation, "convictionScore" | "themeName">,
+  b: Pick<TrendConfirmation, "convictionScore" | "themeName">,
+): number {
+  const scoreDelta = b.convictionScore - a.convictionScore;
+  if (scoreDelta !== 0) return scoreDelta;
+  return a.themeName.localeCompare(b.themeName);
+}
+
+function buildRotationFromConvictionRanked(
+  date: string,
+  ranked: Array<{ displayName: string }>,
+): DailyThemeRotation | null {
+  if (ranked.length === 0) return null;
+
+  return {
+    date,
+    rank1: ranked[0].displayName,
+    rank2: ranked[1]?.displayName ?? "",
+    rank3: ranked[2]?.displayName ?? "",
+    rank4: ranked[3]?.displayName ?? "",
+  };
 }
 
 function buildDailyRotation(
   date: string,
   confirmations: TrendConfirmation[],
 ): DailyThemeRotation | null {
-  const ranked = [...confirmations].sort(
-    (a, b) => b.convictionScore - a.convictionScore,
-  );
+  const ranked = [...confirmations].sort(compareByConviction);
 
-  if (ranked.length < 4) return null;
-
-  return {
+  return buildRotationFromConvictionRanked(
     date,
-    rank1: ranked[0].displayName,
-    rank2: ranked[1].displayName,
-    rank3: ranked[2].displayName,
-    rank4: ranked[3].displayName,
-  };
+    ranked.map((item) => ({ displayName: item.displayName })),
+  );
 }
 
 export async function appendDailyThemeRotation(
@@ -125,10 +142,9 @@ function countChampionWins(
 function collectChampionNames(history: ThemeRotationHistoryFile): string[] {
   const names = new Set<string>();
   for (const entry of history.history) {
-    names.add(entry.rank1);
-    names.add(entry.rank2);
-    names.add(entry.rank3);
-    names.add(entry.rank4);
+    if (entry.rank1) {
+      names.add(entry.rank1);
+    }
   }
   return [...names].sort();
 }
@@ -164,7 +180,10 @@ export function buildCurrentReign(
   if (history.history.length === 0) return null;
 
   const sorted = [...history.history].sort((a, b) => b.date.localeCompare(a.date));
-  const champion = sorted[0].rank1;
+  const latest = sorted[0];
+  if (!latest?.rank1) return null;
+
+  const champion = latest.rank1;
   let consecutiveDays = 0;
 
   for (const entry of sorted) {
