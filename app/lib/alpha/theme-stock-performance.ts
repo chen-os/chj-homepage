@@ -1,3 +1,5 @@
+import fs from "fs/promises";
+import path from "path";
 import { readJson, writeJson } from "./storage";
 
 export type ThemeStockPerformanceRecord = {
@@ -17,8 +19,61 @@ function emptyFile(): ThemeStockPerformanceFile {
   return {};
 }
 
+function isThemeStockPerformanceFile(
+  value: unknown,
+): value is ThemeStockPerformanceFile {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.values(value).every((entry) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      return false;
+    }
+
+    const stocks = (entry as ThemeStockPerformanceEntry).stocks;
+    if (!Array.isArray(stocks)) {
+      return false;
+    }
+
+    return stocks.every((stock) => {
+      if (!stock || typeof stock !== "object" || Array.isArray(stock)) {
+        return false;
+      }
+
+      const record = stock as ThemeStockPerformanceRecord;
+      return (
+        typeof record.ticker === "string" &&
+        typeof record.change7D === "number" &&
+        Number.isFinite(record.change7D)
+      );
+    });
+  });
+}
+
+async function loadBundledSeed(): Promise<ThemeStockPerformanceFile> {
+  try {
+    const seedPath = path.join(process.cwd(), "data", STORAGE_KEY);
+    const raw = await fs.readFile(seedPath, "utf-8");
+    const parsed: unknown = JSON.parse(raw);
+
+    if (!isThemeStockPerformanceFile(parsed) || Object.keys(parsed).length === 0) {
+      return emptyFile();
+    }
+
+    return parsed;
+  } catch {
+    return emptyFile();
+  }
+}
+
 export async function loadThemeStockPerformance(): Promise<ThemeStockPerformanceFile> {
-  return readJson(STORAGE_KEY, emptyFile());
+  const stored = await readJson(STORAGE_KEY, emptyFile());
+  if (Object.keys(stored).length > 0) {
+    return stored;
+  }
+
+  return loadBundledSeed();
 }
 
 export async function saveThemeStockPerformance(
