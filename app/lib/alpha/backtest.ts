@@ -7,6 +7,7 @@ import {
   type DailyWatchlistSnapshot,
   type WatchlistHistoryFile,
 } from "./watchlist-history";
+import { formatBacktestPercent } from "./format-labels";
 import { readJson, upsertJson, writeJson } from "./storage";
 
 export type BacktestStock = {
@@ -100,11 +101,7 @@ function roundReturn(value: number): number {
 }
 
 function formatReturn(value: number | null): string {
-  if (value === null) return "—";
-  const rounded = roundReturn(value);
-  if (rounded > 0) return `+${rounded.toFixed(1)}%`;
-  if (rounded < 0) return `${rounded.toFixed(1)}%`;
-  return "0.0%";
+  return formatBacktestPercent(value);
 }
 
 function calculateReturn(entryPrice: number, exitPrice: number | undefined): number | null {

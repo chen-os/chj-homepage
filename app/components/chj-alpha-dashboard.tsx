@@ -8,6 +8,10 @@ import {
   resolveTrendConfirmations,
   type TrendConfirmation,
 } from "../lib/alpha/conviction-engine";
+import {
+  ALPHA_NA_LABEL,
+  formatBacktestPercent,
+} from "../lib/alpha/format-labels";
 import { buildDailyAlphaReport } from "../lib/alpha/daily-alpha-report";
 import type { GoogleTrendThemeResult } from "../lib/alpha/google-trends";
 import {
@@ -173,6 +177,25 @@ type ThemeChampionItem = {
   winsAllTime: number;
 };
 
+type LeaderTrackerData = {
+  currentLeader: {
+    displayName: string;
+    reignDays: number;
+    becameLeaderDate: string;
+  } | null;
+  leaderHistory: Array<{
+    date: string;
+    displayName: string;
+  }>;
+  leaderPerformance: {
+    displayName: string;
+    sinceDate: string;
+    basketReturn: number | null;
+    basketReturnLabel: string;
+    meaningful: boolean;
+  } | null;
+};
+
 type ThemeRotationResponse = {
   champions: ThemeChampionItem[];
   currentReign: {
@@ -184,6 +207,7 @@ type ThemeRotationResponse = {
     from: string;
     to: string;
   } | null;
+  leaderTracker: LeaderTrackerData;
 };
 
 type ThemeRotationFetchState =
@@ -341,11 +365,7 @@ export function ChjAlphaDashboard({
   }
 
   function formatBacktestReturn(value: number | null): string {
-    if (value === null) return "—";
-    const rounded = Math.round(value * 10) / 10;
-    if (rounded > 0) return `+${rounded.toFixed(1)}%`;
-    if (rounded < 0) return `${rounded.toFixed(1)}%`;
-    return "0.0%";
+    return formatBacktestPercent(value);
   }
 
   const themeScoreboardDisplay = useMemo(() => {
@@ -365,7 +385,7 @@ export function ChjAlphaDashboard({
       .map((theme) => {
         const values = themeReturns.get(theme) ?? [];
         if (values.length === 0) {
-          return { theme, label: "—", averageReturn: null as number | null };
+          return { theme, label: ALPHA_NA_LABEL, averageReturn: null as number | null };
         }
         const averageReturn =
           values.reduce((sum, value) => sum + value, 0) / values.length;
@@ -390,7 +410,7 @@ export function ChjAlphaDashboard({
       signal.stocks.some(hasCompletedHorizonReturn),
     );
 
-    if (signalsWithCompletedReturns.length === 0) return "—";
+    if (signalsWithCompletedReturns.length === 0) return ALPHA_NA_LABEL;
 
     const winningSignals = signalsWithCompletedReturns.filter((signal) => {
       const returns = signal.stocks
@@ -544,19 +564,19 @@ export function ChjAlphaDashboard({
             <li className="rounded-xl border border-neutral-100 px-3 py-3">
               <p className="text-[10px] tracking-wide text-neutral-400">Valuation Risk</p>
               <p className="mt-1 text-[11px] leading-relaxed text-neutral-700">
-                {dailyAlphaReport.riskWarnings.valuationRisk ?? "—"}
+                {dailyAlphaReport.riskWarnings.valuationRisk ?? ALPHA_NA_LABEL}
               </p>
             </li>
             <li className="rounded-xl border border-neutral-100 px-3 py-3">
               <p className="text-[10px] tracking-wide text-neutral-400">Policy Risk</p>
               <p className="mt-1 text-[11px] leading-relaxed text-neutral-700">
-                {dailyAlphaReport.riskWarnings.policyRisk ?? "—"}
+                {dailyAlphaReport.riskWarnings.policyRisk ?? ALPHA_NA_LABEL}
               </p>
             </li>
             <li className="rounded-xl border border-neutral-100 px-3 py-3">
               <p className="text-[10px] tracking-wide text-neutral-400">Execution Risk</p>
               <p className="mt-1 text-[11px] leading-relaxed text-neutral-700">
-                {dailyAlphaReport.riskWarnings.executionRisk ?? "—"}
+                {dailyAlphaReport.riskWarnings.executionRisk ?? ALPHA_NA_LABEL}
               </p>
             </li>
           </ul>
@@ -647,9 +667,85 @@ export function ChjAlphaDashboard({
               {rotationState.data.leadershipChange.date}
             </p>
             <p className="mt-2 font-mono text-[12px] text-neutral-800">
-              {rotationState.data.leadershipChange.from} →{" "}
+              {rotationState.data.leadershipChange.from}
+              {" -> "}
               {rotationState.data.leadershipChange.to}
             </p>
+          </div>
+        )}
+      </Section>
+
+      <Section title="Leader Tracker">
+        {rotationState.status === "loading" ? (
+          <p className="text-[12px] text-neutral-500">Loading leader tracker...</p>
+        ) : rotationState.status === "error" ? (
+          <p className="text-[12px] text-neutral-500">Failed to load leader tracker</p>
+        ) : !rotationState.data.leaderTracker?.currentLeader ? (
+          <p className="text-[12px] text-neutral-500">
+            Leader tracker will appear after daily rotation snapshots accumulate.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-neutral-100 px-3 py-3">
+              <p className="text-[10px] text-neutral-400">Current Leader</p>
+              <p className="mt-1 text-[14px] font-medium text-neutral-900">
+                {rotationState.data.leaderTracker.currentLeader.displayName}
+              </p>
+              <p className="mt-2 text-[11px] text-neutral-500">
+                Leader for{" "}
+                {rotationState.data.leaderTracker.currentLeader.reignDays === 1
+                  ? "1 Day"
+                  : `${rotationState.data.leaderTracker.currentLeader.reignDays} Days`}
+              </p>
+              <p className="mt-1 font-mono text-[11px] text-neutral-600">
+                Since {rotationState.data.leaderTracker.currentLeader.becameLeaderDate}
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-neutral-100 px-3 py-3">
+              <p className="text-[10px] text-neutral-400">Leader History</p>
+              {rotationState.data.leaderTracker.leaderHistory.length === 0 ? (
+                <p className="mt-2 text-[12px] text-neutral-500">No leader history yet.</p>
+              ) : (
+                <ul className="mt-2 space-y-1.5">
+                  {rotationState.data.leaderTracker.leaderHistory.map((entry) => (
+                    <li
+                      key={entry.date}
+                      className="flex items-center justify-between gap-4 font-mono text-[11px] text-neutral-700"
+                    >
+                      <span>{entry.date}</span>
+                      <span className="font-medium text-neutral-900">
+                        {entry.displayName}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-neutral-100 px-3 py-3">
+              <p className="text-[10px] text-neutral-400">Leader Performance</p>
+              {!rotationState.data.leaderTracker.leaderPerformance ? (
+                <p className="mt-2 text-[12px] text-neutral-500">
+                  Performance will appear once watchlist prices are available.
+                </p>
+              ) : (
+                <div className="mt-2 space-y-2">
+                  <p className="text-[11px] text-neutral-500">
+                    Leader Since:{" "}
+                    <span className="font-mono text-neutral-800">
+                      {rotationState.data.leaderTracker.leaderPerformance.sinceDate}
+                    </span>
+                  </p>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-[12px] text-neutral-600">Theme Basket Return</p>
+                    <p className="font-mono text-[14px] font-medium text-neutral-900">
+                      {rotationState.data.leaderTracker.leaderPerformance.basketReturnLabel}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </Section>
@@ -776,7 +872,7 @@ export function ChjAlphaDashboard({
                 <ul className="mt-2 space-y-1.5">
                   {theme.stocks.map((stock) => {
                     const primaryLabel =
-                      stock.change7DayLabel !== "—"
+                      stock.change7DayLabel !== ALPHA_NA_LABEL
                         ? stock.change7DayLabel
                         : stock.change1DayLabel;
 

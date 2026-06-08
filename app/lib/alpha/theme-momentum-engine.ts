@@ -1,5 +1,9 @@
 import type { AlphaHistoryFile } from "./history";
 import type { TrendConfirmation } from "./conviction-engine";
+import {
+  formatConvictionChangeLabel,
+  formatIncreaseLabel,
+} from "./format-labels";
 
 export type ThemeMomentum = {
   themeName: string;
@@ -22,20 +26,6 @@ function subtractDays(date: string, days: number): string {
   const parsed = new Date(`${date}T12:00:00.000Z`);
   parsed.setUTCDate(parsed.getUTCDate() - days);
   return parsed.toISOString().slice(0, 10);
-}
-
-function formatConvictionChange(change: number): string {
-  const rounded = Math.round(change);
-  if (rounded > 0) return `▲ +${rounded} (7D)`;
-  if (rounded < 0) return `▼ ${rounded} (7D)`;
-  return "— 0 (7D)";
-}
-
-function formatIncreaseLabel(change: number): string {
-  const rounded = Math.round(change);
-  if (rounded > 0) return `+${rounded}`;
-  if (rounded < 0) return `${rounded}`;
-  return "0";
 }
 
 function getConvictionFromDay(
@@ -118,7 +108,7 @@ export function buildThemeMomentum(
         displayName: confirmation.displayName,
         convictionScore,
         convictionChange7Day,
-        convictionChangeLabel: formatConvictionChange(convictionChange7Day),
+        convictionChangeLabel: formatConvictionChangeLabel(convictionChange7Day),
         trendAgeDays: getTrendAgeDays(
           history,
           confirmation.themeName,

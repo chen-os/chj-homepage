@@ -1,3 +1,4 @@
+import { formatPercentChange } from "./format-labels";
 import type { WatchlistHistoryFile } from "./watchlist-history";
 import { getStockPriceOnDate } from "./watchlist-history";
 
@@ -26,14 +27,6 @@ function subtractDays(date: string, days: number): string {
   const parsed = new Date(`${date}T12:00:00.000Z`);
   parsed.setUTCDate(parsed.getUTCDate() - days);
   return parsed.toISOString().slice(0, 10);
-}
-
-function formatChange(rate: number | null): string {
-  if (rate === null) return "—";
-  const rounded = Math.round(rate * 10) / 10;
-  if (rounded > 0) return `+${rounded.toFixed(1)}%`;
-  if (rounded < 0) return `${rounded.toFixed(1)}%`;
-  return "0.0%";
 }
 
 function calculateChange(current: number, baseline: number | null): number | null {
@@ -81,9 +74,9 @@ function buildStockPerformance(
     change1Day,
     change7Day,
     change30Day,
-    change1DayLabel: formatChange(change1Day),
-    change7DayLabel: formatChange(change7Day),
-    change30DayLabel: formatChange(change30Day),
+    change1DayLabel: formatPercentChange(change1Day),
+    change7DayLabel: formatPercentChange(change7Day),
+    change30DayLabel: formatPercentChange(change30Day),
   };
 }
 
