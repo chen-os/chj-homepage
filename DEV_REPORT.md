@@ -1,99 +1,75 @@
 # CHJ 开发协作报告
 
-本文件是 CHJ 项目的**标准开发协作记录**。每次代码修改完成后，必须更新本文件（覆盖「最新报告」区块），再提交或交付。
-
----
-
-## 协作流程
-
-### 何时更新
-
-- 完成一次功能开发、修复、重构或配置变更后
-- 准备 commit / PR / 部署前
-- Agent 或开发者结束一轮修改时
-
-### 更新步骤
-
-1. 填写下方「最新报告」各字段（以当前工作区真实状态为准）
-2. 在本地执行以下命令，将输出粘贴到对应区块：
-
-```bash
-git status
-git diff --stat
-npm run build
-```
-
-3. 如有 staged 变更，补充 `git diff --cached --stat`
-4. 更新「最后更新」时间与「报告编号 / 版本」
-5. 将本文件与业务代码一并纳入 commit（推荐）
-
-### 报告字段说明
-
-| 字段 | 说明 |
-|------|------|
-| 当前目标 | 本轮工作或项目阶段要达成的目标 |
-| 修改文件 | 新增 / 修改 / 删除的文件路径列表 |
-| 修改说明 | 做了什么、为什么做（面向协作者，非 diff 复述） |
-| git status | `git status` 完整输出 |
-| git diff --stat | `git diff --stat` 输出；无变更时写「无未提交 diff」 |
-| npm run build 结果 | 构建命令输出摘要；失败则记录错误与原因 |
-| 已知问题 | 当前未解决的 bug、限制、技术债 |
-| 下一步建议 | 建议的后续任务（优先级从高到低） |
-
-### 子域名与本地路径速查
-
-| 路径 | 用途 | 本地 URL |
-|------|------|----------|
-| `/` | CHJ Home V2（主入口） | http://localhost:3000 |
-| `/pony` | Pony Life Dashboard | http://localhost:3000/pony |
-| `/car` | Car Dashboard（Emergency） | http://localhost:3000/car |
-| `/finance` | Finance Dashboard（占位） | http://localhost:3000/finance |
-| `/family` | Family Schedule（占位） | http://localhost:3000/family |
-| `/translate` | AI Translator | http://localhost:3000/translate |
-| `/admin` | Control Center | http://localhost:3000/admin |
-| `/admin/dev` | 開発ダッシュボード | http://localhost:3000/admin/dev |
-
-**子域名兼容（非主入口）：** `pony.chj.jp` → Pony；`admin.chj.jp` → Admin
+本文件是 CHJ 项目的标准开发协作记录。每次代码修改完成后，必须更新本文件「最新报告」区块，包含：当前目标、修改文件、修改说明、`git status`、`git diff --stat`、`npm run build` 结果、已知问题、下一步建议。
 
 ---
 
 ## 最新报告
 
-**报告编号：** #008
+**报告编号：** #010
 **最后更新：** 2026-06-25
 **分支：** main
-**更新者：** Codex — Translate Debug 信息
+**更新者：** Codex — Development Documentation System
 
 ### 当前目标
 
-临时在 `/translate` 页面底部显示调试信息，用于确认前端实际请求的 endpoint 与 fetch 返回的完整 JSON。
+在 `~/Projects/chj-homepage` 中初始化项目文档体系，只创建/更新 Markdown 文档，不修改应用源码。
 
 ### 修改文件
 
-**修改**
+**新增 / 修改**
 
-- `app/components/translate-app.tsx` — 增加页面底部 debug 区块
-- `DEV_REPORT.md` — 更新最新报告（#008）
+- `README.md` — 项目入口文档
+- `CHANGELOG.md` — 项目变更记录
+- `SESSION.md` — 当前开发状态
+- `docs/DEVELOPMENT.md` — 开发流程
+- `docs/PROJECT.md` — 项目愿景与架构
+- `docs/ROADMAP.md` — 产品路线图
+- `docs/CODING_STYLE.md` — 编码规范
+- `docs/AI_RULES.md` — AI 开发者规则
+- `docs/modules/translate.md` — Translate 模块文档
+- `docs/decisions/2026-06-25-development-workflow.md` — 开发流程决策记录
+- `DEV_REPORT.md` — 本报告
 
 ### 修改说明
 
-- 新增 `TRANSLATE_ENDPOINT = "/api/translate"` 常量，并让真实 `fetch` 使用该常量，避免显示的 endpoint 与实际请求不一致。
-- 新增 `debugResponse` state，保存每次 `fetch` 返回并成功解析后的完整 JSON。
-- 页面底部新增小型 `<details>` debug 区块，显示 endpoint 与完整 JSON；主翻译 UI 结构未改动。
+- 建立完整项目文档体系，明确 GitHub 是唯一源码来源。
+- 记录 iMac / MacBook 通过 GitHub 同步的开发模式。
+- 记录 Vercel 自动部署、OpenAI API、Translate 当前状态和后续路线。
+- 明确不使用 patch、AirDrop、Google Drive 传源码，不使用 Cursor 作为主开发工具。
+- 根 `README.md` 从默认 Next.js 模板更新为 CHJ 项目入口。
 
 ### git status
 
 ```
+## main...origin/main
  M DEV_REPORT.md
- M app/components/translate-app.tsx
+ M README.md
+?? CHANGELOG.md
+?? SESSION.md
+?? docs/
 ```
 
 ### git diff --stat
 
 ```
- DEV_REPORT.md                    | 36 +++++++++++++++++-------------------
- app/components/translate-app.tsx | 24 +++++++++++++++++++++++-
- 2 files changed, 40 insertions(+), 20 deletions(-)
+ DEV_REPORT.md | 138 ++++++++++++----------------------------------------------
+ README.md     |  97 ++++++++++++++++++++++++++++++++---------
+ 2 files changed, 106 insertions(+), 129 deletions(-)
+```
+
+未跟踪新增文档：
+
+```
+CHANGELOG.md
+SESSION.md
+docs/AI_RULES.md
+docs/CODING_STYLE.md
+docs/DEVELOPMENT.md
+docs/PROJECT.md
+docs/ROADMAP.md
+docs/decisions/2026-06-25-development-workflow.md
+docs/modules/translate.md
 ```
 
 **staged diff：** 无
@@ -101,7 +77,8 @@ npm run build
 ### npm run build 结果
 
 ```
-当前 Codex shell 没有 `npm` 命令；构建验证继续使用同一项目依赖下的 Next 可执行文件：
+当前 Codex shell 没有 npm 命令，且仓库初始没有 node_modules。
+为验证构建，使用 Codex bundled Node + 项目依赖下的 Next 可执行文件运行 production build：
 PATH=/Users/CHJ/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH ./node_modules/.bin/next build
 
 ✓ 成功（exit code 0）
@@ -109,40 +86,21 @@ PATH=/Users/CHJ/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bi
 ✓ Compiled successfully
 ✓ Finished TypeScript
 ✓ Generating static pages (26/26)
-
-Route (app)
-├ ƒ /api/translate
-├ ○ /translate
 ```
 
 ### 已知问题
 
-- 当前本地环境没有 `npm` 命令，因此无法原样执行 `npm run build`；已使用同一项目依赖下的 `next build` 完成构建验证。
-- debug 区块是临时诊断用途，确认线上 JSON contract 后应移除。
-- 当前本地提交仍因 GitHub 认证问题未推送，当前分支在本地领先 `origin/main`。
+- 当前环境没有 `npm` 命令，因此无法逐字执行 `npm run build`；已完成等价 production build 验证。
+- 本次任务只处理文档；应用代码未改动。
 
 ### 下一步建议
 
-1. 在线上点击翻译后展开 Debug，确认 endpoint 与 JSON 字段。
-2. 确认问题后移除临时 debug 区块。
-3. 配置 GitHub 凭据后推送本地领先提交。
+1. 在本机标准开发环境中确认 `npm install` / `npm run build` 可直接执行。
+2. 后续开发会话结束时持续更新 `SESSION.md`。
+3. 重要架构和流程变化继续记录到 `docs/decisions/`。
 
 ---
 
 ## 历史报告归档
 
-### #004 — 2026-05-31 — Car V1 Emergency
-
-`/car` 紧急联系电话大按钮与 `tel:` 拨号。
-
-### #003 — 2026-05-31 — CHJ Home V2
-
-确立 chj.jp 单主入口多模块架构，新增 `/pony` 等内部路由。
-
-### #002 — 2026-05-31 — 開発診断システム
-
-新增 `/admin/dev` 開発ダッシュボード。
-
-### #001 — 2026-05-31 — 协作流程初始化
-
-建立 `DEV_REPORT.md` 与 `AGENTS.md` 更新规则。
+历史报告可从 Git 记录中追溯。
