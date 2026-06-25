@@ -23,26 +23,6 @@
       }
     ]
   },
-  "Nuclear": {
-    "stocks": [
-      {
-        "ticker": "CCJ",
-        "change7D": -3.9
-      },
-      {
-        "ticker": "LEU",
-        "change7D": -10.9
-      },
-      {
-        "ticker": "SMR",
-        "change7D": -11.1
-      },
-      {
-        "ticker": "CEG",
-        "change7D": -11.1
-      }
-    ]
-  },
   "Humanoid": {
     "stocks": [
       {
@@ -88,6 +68,26 @@
       {
         "ticker": "AVGO",
         "change7D": -7
+      }
+    ]
+  },
+  "Nuclear": {
+    "stocks": [
+      {
+        "ticker": "CCJ",
+        "change7D": -3.9
+      },
+      {
+        "ticker": "LEU",
+        "change7D": -10.9
+      },
+      {
+        "ticker": "SMR",
+        "change7D": -11.1
+      },
+      {
+        "ticker": "CEG",
+        "change7D": -11.1
       }
     ]
   }

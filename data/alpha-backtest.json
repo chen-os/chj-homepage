@@ -8,7 +8,7 @@
         {
           "ticker": "NVDA",
           "entryPrice": 208.07,
-          "currentPrice": 208.07,
+          "currentPrice": 208.38,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -16,7 +16,7 @@
         {
           "ticker": "AMD",
           "entryPrice": 484.95,
-          "currentPrice": 484.95,
+          "currentPrice": 485.68,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -24,7 +24,7 @@
         {
           "ticker": "AVGO",
           "entryPrice": 396.87,
-          "currentPrice": 396.87,
+          "currentPrice": 396.19,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -32,7 +32,7 @@
         {
           "ticker": "ANET",
           "entryPrice": 157.21,
-          "currentPrice": 157.21,
+          "currentPrice": 156.09,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -40,7 +40,7 @@
         {
           "ticker": "MU",
           "entryPrice": 926.06,
-          "currentPrice": 926.06,
+          "currentPrice": 939.5,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -55,7 +55,7 @@
         {
           "ticker": "LEU",
           "entryPrice": 169.9,
-          "currentPrice": 169.9,
+          "currentPrice": 163.34,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -63,7 +63,7 @@
         {
           "ticker": "CEG",
           "entryPrice": 257.96,
-          "currentPrice": 257.96,
+          "currentPrice": 253.46,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -71,7 +71,7 @@
         {
           "ticker": "VST",
           "entryPrice": 150.71,
-          "currentPrice": 150.71,
+          "currentPrice": 148.37,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -79,7 +79,7 @@
         {
           "ticker": "ETN",
           "entryPrice": 403.56,
-          "currentPrice": 403.56,
+          "currentPrice": 403.1,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -87,7 +87,7 @@
         {
           "ticker": "BE",
           "entryPrice": 270.43,
-          "currentPrice": 270.43,
+          "currentPrice": 259.76,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -102,7 +102,7 @@
         {
           "ticker": "TSLA",
           "entryPrice": 401.43,
-          "currentPrice": 401.43,
+          "currentPrice": 399,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -110,7 +110,7 @@
         {
           "ticker": "ISRG",
           "entryPrice": 426.05,
-          "currentPrice": 426.05,
+          "currentPrice": 420.78,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -118,7 +118,7 @@
         {
           "ticker": "NVDA",
           "entryPrice": 208.07,
-          "currentPrice": 208.07,
+          "currentPrice": 208.38,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -126,7 +126,7 @@
         {
           "ticker": "TER",
           "entryPrice": 377.07,
-          "currentPrice": 377.07,
+          "currentPrice": 374.53,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -134,7 +134,7 @@
         {
           "ticker": "FANUY",
           "entryPrice": 23.35,
-          "currentPrice": 23.35,
+          "currentPrice": 22.87,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -149,7 +149,7 @@
         {
           "ticker": "LEU",
           "entryPrice": 169.9,
-          "currentPrice": 169.9,
+          "currentPrice": 163.34,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -157,7 +157,7 @@
         {
           "ticker": "CCJ",
           "entryPrice": 106.62,
-          "currentPrice": 106.62,
+          "currentPrice": 105.22,
           "return1D": null,
           "return7D": null,
           "return30D": null
@@ -173,7 +173,187 @@
         {
           "ticker": "CEG",
           "entryPrice": 257.96,
-          "currentPrice": 257.96,
+          "currentPrice": 253.46,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        }
+      ]
+    },
+    {
+      "date": "2026-06-12",
+      "theme": "AI Compute Infrastructure",
+      "convictionScore": 25,
+      "stocks": [
+        {
+          "ticker": "NVDA",
+          "entryPrice": 208.38,
+          "currentPrice": 208.38,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "AMD",
+          "entryPrice": 485.68,
+          "currentPrice": 485.68,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "AVGO",
+          "entryPrice": 396.19,
+          "currentPrice": 396.19,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "ANET",
+          "entryPrice": 156.09,
+          "currentPrice": 156.09,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "MU",
+          "entryPrice": 939.5,
+          "currentPrice": 939.5,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        }
+      ]
+    },
+    {
+      "date": "2026-06-12",
+      "theme": "AI Data Center Power Demand",
+      "convictionScore": 40,
+      "stocks": [
+        {
+          "ticker": "LEU",
+          "entryPrice": 163.34,
+          "currentPrice": 163.34,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "CEG",
+          "entryPrice": 253.46,
+          "currentPrice": 253.46,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "VST",
+          "entryPrice": 148.37,
+          "currentPrice": 148.37,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "ETN",
+          "entryPrice": 403.1,
+          "currentPrice": 403.1,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "BE",
+          "entryPrice": 259.76,
+          "currentPrice": 259.76,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        }
+      ]
+    },
+    {
+      "date": "2026-06-12",
+      "theme": "Humanoid Robotics Supply Chain",
+      "convictionScore": 38,
+      "stocks": [
+        {
+          "ticker": "TSLA",
+          "entryPrice": 399,
+          "currentPrice": 399,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "ISRG",
+          "entryPrice": 420.78,
+          "currentPrice": 420.78,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "NVDA",
+          "entryPrice": 208.38,
+          "currentPrice": 208.38,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "TER",
+          "entryPrice": 374.53,
+          "currentPrice": 374.53,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "FANUY",
+          "entryPrice": 22.87,
+          "currentPrice": 22.87,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        }
+      ]
+    },
+    {
+      "date": "2026-06-12",
+      "theme": "Nuclear Fuel Cycle",
+      "convictionScore": 18,
+      "stocks": [
+        {
+          "ticker": "LEU",
+          "entryPrice": 163.34,
+          "currentPrice": 163.34,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "CCJ",
+          "entryPrice": 105.22,
+          "currentPrice": 105.22,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "SMR",
+          "entryPrice": 10.84,
+          "currentPrice": 10.84,
+          "return1D": null,
+          "return7D": null,
+          "return30D": null
+        },
+        {
+          "ticker": "CEG",
+          "entryPrice": 253.46,
+          "currentPrice": 253.46,
           "return1D": null,
           "return7D": null,
           "return30D": null

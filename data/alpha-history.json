@@ -81,6 +81,47 @@
           "googleTrendScore": 0
         }
       ]
+    },
+    {
+      "date": "2026-06-12",
+      "trends": [
+        {
+          "name": "AI Data Center Power Demand",
+          "displayName": "AI Power",
+          "alphaScore": 69,
+          "signalStrength": "Medium",
+          "evidenceCount": 16,
+          "convictionScore": 47,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "AI Compute Infrastructure",
+          "displayName": "AI Compute",
+          "alphaScore": 40,
+          "signalStrength": "Low",
+          "evidenceCount": 11,
+          "convictionScore": 25,
+          "googleTrendScore": 0
+        },
+        {
+          "name": "Humanoid Robotics Supply Chain",
+          "displayName": "Humanoid",
+          "alphaScore": 45,
+          "signalStrength": "Low",
+          "evidenceCount": 10,
+          "convictionScore": 23,
+          "googleTrendScore": 10
+        },
+        {
+          "name": "Nuclear Fuel Cycle",
+          "displayName": "Nuclear",
+          "alphaScore": 32,
+          "signalStrength": "Low",
+          "evidenceCount": 10,
+          "convictionScore": 18,
+          "googleTrendScore": 0
+        }
+      ]
     }
   ]
 }

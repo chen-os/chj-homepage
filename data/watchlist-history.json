@@ -201,6 +201,107 @@
           ]
         }
       ]
+    },
+    {
+      "date": "2026-06-12",
+      "themes": [
+        {
+          "theme": "AI Data Center Power Demand",
+          "stocks": [
+            {
+              "ticker": "LEU",
+              "price": 163.34
+            },
+            {
+              "ticker": "CEG",
+              "price": 253.46
+            },
+            {
+              "ticker": "VST",
+              "price": 148.37
+            },
+            {
+              "ticker": "ETN",
+              "price": 403.1
+            },
+            {
+              "ticker": "BE",
+              "price": 259.76
+            }
+          ]
+        },
+        {
+          "theme": "Nuclear Fuel Cycle",
+          "stocks": [
+            {
+              "ticker": "LEU",
+              "price": 163.34
+            },
+            {
+              "ticker": "CCJ",
+              "price": 105.22
+            },
+            {
+              "ticker": "SMR",
+              "price": 10.84
+            },
+            {
+              "ticker": "CEG",
+              "price": 253.46
+            }
+          ]
+        },
+        {
+          "theme": "Humanoid Robotics Supply Chain",
+          "stocks": [
+            {
+              "ticker": "TSLA",
+              "price": 399
+            },
+            {
+              "ticker": "ISRG",
+              "price": 420.78
+            },
+            {
+              "ticker": "NVDA",
+              "price": 208.38
+            },
+            {
+              "ticker": "TER",
+              "price": 374.53
+            },
+            {
+              "ticker": "FANUY",
+              "price": 22.87
+            }
+          ]
+        },
+        {
+          "theme": "AI Compute Infrastructure",
+          "stocks": [
+            {
+              "ticker": "NVDA",
+              "price": 208.38
+            },
+            {
+              "ticker": "AMD",
+              "price": 485.68
+            },
+            {
+              "ticker": "AVGO",
+              "price": 396.19
+            },
+            {
+              "ticker": "ANET",
+              "price": 156.09
+            },
+            {
+              "ticker": "MU",
+              "price": 939.5
+            }
+          ]
+        }
+      ]
     }
   ]
 }

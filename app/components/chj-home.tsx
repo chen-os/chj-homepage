@@ -3,52 +3,38 @@ import Link from "next/link";
 export type HomeModule = {
   id: string;
   title: string;
+  subtitle: string;
   description: string;
-  status: string;
   href: string;
 };
 
 export const homeModules: HomeModule[] = [
   {
-    id: "pony",
-    title: "Pony",
-    description: "Pony Life",
-    status: "今日の散歩を記録",
-    href: "/pony",
-  },
-  {
     id: "car",
     title: "Car",
-    description: "GLC 350e",
-    status: "車両管理",
+    subtitle: "GLC 350e",
+    description: "車両管理",
     href: "/car",
-  },
-  {
-    id: "finance",
-    title: "Finance",
-    description: "Money & FX",
-    status: "為替・資産管理",
-    href: "/finance",
-  },
-  {
-    id: "family",
-    title: "Family",
-    description: "Family Schedule",
-    status: "予定・部活・習い事",
-    href: "/family",
   },
   {
     id: "translate",
     title: "Translate",
-    description: "AI Translator",
-    status: "音声翻訳",
+    subtitle: "AI Realtime Translator",
+    description: "音声・テキスト翻訳",
     href: "/translate",
+  },
+  {
+    id: "identity",
+    title: "Identity Center",
+    subtitle: "Identity & Account Names",
+    description: "身分・口座名管理",
+    href: "/identity",
   },
   {
     id: "admin",
     title: "Admin",
-    description: "Control Center",
-    status: "システム管理",
+    subtitle: "Control Center",
+    description: "システム管理",
     href: "/admin",
   },
 ];
@@ -82,7 +68,7 @@ export function ChjHome() {
                       {module.title}
                     </p>
                     <p className="mt-0.5 text-[11px] text-neutral-400">
-                      {module.description}
+                      {module.subtitle}
                     </p>
                   </div>
                   <span
@@ -92,7 +78,9 @@ export function ChjHome() {
                     →
                   </span>
                 </div>
-                <p className="mt-3 text-[12px] text-neutral-600">{module.status}</p>
+                <p className="mt-3 text-[12px] text-neutral-600">
+                  {module.description}
+                </p>
               </Link>
             </li>
           ))}

@@ -6,6 +6,13 @@
       "rank2": "Humanoid",
       "rank3": "Nuclear",
       "rank4": "AI Compute"
+    },
+    {
+      "date": "2026-06-12",
+      "rank1": "AI Power",
+      "rank2": "AI Compute",
+      "rank3": "Humanoid",
+      "rank4": "Nuclear"
     }
   ]
 }

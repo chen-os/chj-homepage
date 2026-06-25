@@ -1,58 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type LangCode = "en" | "ja" | "zh";
+const SCENARIOS = [
+  { id: "日常", label: "日常" },
+  { id: "学校", label: "学校" },
+  { id: "病院", label: "病院" },
+  { id: "銀行", label: "銀行" },
+  { id: "役所", label: "役所" },
+  { id: "レストラン", label: "レストラン" },
+  { id: "電話", label: "電話" },
+  { id: "ビジネス", label: "ビジネス" },
+] as const;
 
-const TARGET_LANGUAGES: { code: LangCode; label: string }[] = [
-  { code: "ja", label: "Japanese" },
-  { code: "zh", label: "Chinese" },
-  { code: "en", label: "English" },
-];
+type ScenarioId = (typeof SCENARIOS)[number]["id"];
 
 type RecordingStatus =
   | "idle"
   | "requesting"
   | "recording"
-  | "processing-speech"
+  | "transcribing"
   | "translating"
   | "finished"
   | "error";
 
-type TranslateAppProps = {
-  mode?: string;
-};
-
-const SCENARIO_LABELS: Record<string, string> = {
-  car: "Car Dealer",
-  school: "School",
-  restaurant: "Restaurant",
-  travel: "Travel",
-  business: "Business",
-  default: "General",
-};
-
 function formatMicError(error: unknown): string {
   if (error instanceof DOMException) {
     if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
-      return "Microphone permission was denied. Allow microphone access in Safari Settings.";
+      return "マイクの許可が必要です。Safari の設定でマイクを許可してください。";
     }
     if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
-      return "No microphone was found on this device.";
+      return "この端末でマイクが見つかりません。";
     }
     if (error.name === "NotReadableError") {
-      return "Microphone is in use by another app.";
+      return "マイクは他のアプリで使用中です。";
     }
     if (error.name === "SecurityError") {
-      return "Microphone access requires a secure connection (HTTPS).";
+      return "マイクの利用には HTTPS 接続が必要です。";
     }
     return error.message || error.name;
   }
   if (error instanceof Error) {
     return error.message;
   }
-  return "Unable to access the microphone.";
+  return "マイクにアクセスできません。";
 }
 
 function getRecorderOptions(): MediaRecorderOptions | undefined {
@@ -82,31 +74,26 @@ async function readApiError(response: Response): Promise<string> {
   }
 }
 
-export function TranslateApp({ mode }: TranslateAppProps) {
-  const scenarioLabel = useMemo(
-    () => SCENARIO_LABELS[mode ?? "default"] ?? SCENARIO_LABELS.default,
-    [mode],
-  );
+function resolveSpeechLang(detectedLanguage: string): string {
+  if (detectedLanguage.includes("日本")) return "zh-CN";
+  if (detectedLanguage.includes("中国")) return "ja-JP";
+  if (detectedLanguage.includes("英")) return "ja-JP";
+  return "ja-JP";
+}
 
-  const [toLang, setToLang] = useState<LangCode>("ja");
+export function TranslateApp() {
+  const [context, setContext] = useState<ScenarioId>("日常");
+  const [inputText, setInputText] = useState("");
+  const [detectedLanguage, setDetectedLanguage] = useState("");
+  const [translatedText, setTranslatedText] = useState("");
   const [status, setStatus] = useState<RecordingStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
-  const [transcript, setTranscript] = useState("");
-  const [translation, setTranslation] = useState("");
-  const [recordingDurationSec, setRecordingDurationSec] = useState<number | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const startedAtRef = useRef<number | null>(null);
-  const timerRef = useRef<number | null>(null);
-
-  const clearTimer = useCallback(() => {
-    if (timerRef.current !== null) {
-      window.clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
 
   const releaseMicrophone = useCallback(() => {
     mediaRecorderRef.current = null;
@@ -120,335 +107,337 @@ export function TranslateApp({ mode }: TranslateAppProps) {
 
   useEffect(() => {
     return () => {
-      clearTimer();
       releaseMicrophone();
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
     };
-  }, [clearTimer, releaseMicrophone]);
+  }, [releaseMicrophone]);
+
+  const translateText = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) {
+        setErrorMessage("翻訳するテキストを入力してください。");
+        setStatus("error");
+        return;
+      }
+
+      setErrorMessage("");
+      setStatus("translating");
+
+      try {
+        const response = await fetch("/api/translate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text: trimmed,
+            context,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(await readApiError(response));
+        }
+
+        const data = (await response.json()) as {
+          detectedLanguage?: string;
+          translatedText?: string;
+        };
+
+        setDetectedLanguage(data.detectedLanguage?.trim() ?? "");
+        setTranslatedText(data.translatedText?.trim() ?? "");
+        setStatus("finished");
+      } catch (error) {
+        setStatus("error");
+        setErrorMessage(
+          error instanceof Error ? error.message : "翻訳に失敗しました。",
+        );
+      }
+    },
+    [context],
+  );
+
+  const processAudioBlob = useCallback(
+    async (blob: Blob) => {
+      try {
+        setStatus("transcribing");
+
+        const formData = new FormData();
+        formData.append("audio", blob, getAudioFileName(blob));
+
+        const response = await fetch("/api/transcribe", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(await readApiError(response));
+        }
+
+        const data = (await response.json()) as { text?: string };
+        const nextText = data.text?.trim();
+
+        if (!nextText) {
+          throw new Error("音声認識の結果が空でした。");
+        }
+
+        setInputText(nextText);
+        await translateText(nextText);
+      } catch (error) {
+        setStatus("error");
+        setErrorMessage(
+          error instanceof Error ? error.message : "音声認識に失敗しました。",
+        );
+      }
+    },
+    [translateText],
+  );
 
   const startRecording = () => {
-    console.log("start button clicked");
-
     setErrorMessage("");
-    setRecordingDurationSec(null);
-    setTranscript("");
-    setTranslation("");
+    setDetectedLanguage("");
+    setTranslatedText("");
 
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-      const msg =
-        "Microphone API is not available. Use Safari on iOS 14.3+ over HTTPS.";
-      console.log("recording error", msg);
       setStatus("error");
-      setErrorMessage(msg);
+      setErrorMessage(
+        "このブラウザは録音に対応していません。iOS 14.3 以降の Safari と HTTPS をご利用ください。",
+      );
       return;
     }
 
     if (typeof MediaRecorder === "undefined") {
-      const msg = "Recording is not supported on this browser.";
-      console.log("recording error", msg);
       setStatus("error");
-      setErrorMessage(msg);
+      setErrorMessage("このブラウザは MediaRecorder に対応していません。");
       return;
     }
 
     releaseMicrophone();
-    clearTimer();
     chunksRef.current = [];
     startedAtRef.current = null;
     setStatus("requesting");
-    console.log("requesting microphone");
 
-    // Must invoke getUserMedia synchronously inside the click handler (Safari).
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then((stream) => {
-        console.log("microphone granted");
-
         mediaStreamRef.current = stream;
 
         let recorder: MediaRecorder;
         try {
           recorder = new MediaRecorder(stream, getRecorderOptions());
-        } catch (err) {
-          console.log("recording error", err);
+        } catch (error) {
           releaseMicrophone();
           setStatus("error");
-          setErrorMessage(formatMicError(err));
+          setErrorMessage(formatMicError(error));
           return;
         }
 
         recorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
             chunksRef.current.push(event.data);
-            console.log("audio chunk received", event.data.size);
           }
         };
 
-        recorder.onerror = (event) => {
-          console.log("recording error", event);
-          clearTimer();
+        recorder.onerror = () => {
           releaseMicrophone();
           setStatus("error");
-          setErrorMessage("Recording failed. Please try again.");
+          setErrorMessage("録音中にエラーが発生しました。");
         };
 
         mediaRecorderRef.current = recorder;
         startedAtRef.current = Date.now();
         recorder.start();
-        console.log("media recorder started");
         setStatus("recording");
-        timerRef.current = window.setInterval(() => {
-          if (!startedAtRef.current) return;
-          setRecordingDurationSec((Date.now() - startedAtRef.current) / 1000);
-        }, 200);
       })
-      .catch((err) => {
-        console.log("recording error", err);
-        clearTimer();
+      .catch((error) => {
         releaseMicrophone();
         setStatus("error");
-        setErrorMessage(formatMicError(err));
+        setErrorMessage(formatMicError(error));
       });
   };
 
-  const processAudioBlob = useCallback(
-    async (blob: Blob) => {
-      try {
-        console.log("audio blob", blob);
-        setStatus("processing-speech");
-
-        const speechFormData = new FormData();
-        speechFormData.append("audio", blob, getAudioFileName(blob));
-
-        const speechResponse = await fetch("/api/speech-to-text", {
-          method: "POST",
-          body: speechFormData,
-        });
-
-        if (!speechResponse.ok) {
-          throw new Error(await readApiError(speechResponse));
-        }
-
-        const speechData = (await speechResponse.json()) as {
-          transcript?: string;
-        };
-        const nextTranscript = speechData.transcript?.trim();
-
-        if (!nextTranscript) {
-          throw new Error("Speech-to-text returned an empty transcript.");
-        }
-
-        setTranscript(nextTranscript);
-        setStatus("translating");
-
-        const translateResponse = await fetch("/api/context-translate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            transcript: nextTranscript,
-            targetLanguage: toLang,
-            contextMode: mode ?? "general",
-            tone: "natural",
-          }),
-        });
-
-        if (!translateResponse.ok) {
-          throw new Error(await readApiError(translateResponse));
-        }
-
-        const translateData = (await translateResponse.json()) as {
-          translation?: string;
-        };
-
-        setTranslation(translateData.translation?.trim() ?? "");
-        setStatus("finished");
-      } catch (err) {
-        console.log("recording error", err);
-        setStatus("error");
-        setErrorMessage(err instanceof Error ? err.message : "Translation failed.");
-      }
-    },
-    [mode, toLang],
-  );
-
-  const stopRecording = useCallback(() => {
+  const stopRecording = () => {
     const recorder = mediaRecorderRef.current;
-    setStatus("processing-speech");
-    clearTimer();
-
-    const finishWithoutRecorder = () => {
-      releaseMicrophone();
-      setStatus("error");
-      setErrorMessage("No active recording session found.");
-    };
 
     if (!recorder || recorder.state === "inactive") {
-      finishWithoutRecorder();
+      releaseMicrophone();
+      setStatus("error");
+      setErrorMessage("録音セッションが見つかりません。");
       return;
     }
 
     recorder.onstop = () => {
-      console.log("recording stopped");
       const blob = new Blob(chunksRef.current, {
         type: recorder.mimeType || "audio/mp4",
       });
-      console.log("blob created", blob);
-
-      const startedAt = startedAtRef.current;
-      const durationSec = startedAt ? (Date.now() - startedAt) / 1000 : 0;
-      setRecordingDurationSec(durationSec);
-
       releaseMicrophone();
-      setTranslation("");
       void processAudioBlob(blob);
     };
 
     try {
       recorder.stop();
-    } catch (err) {
-      console.log("recording error", err);
+    } catch {
       releaseMicrophone();
       setStatus("error");
-      setErrorMessage("Unable to stop recording cleanly.");
+      setErrorMessage("録音の停止に失敗しました。");
     }
-  }, [clearTimer, processAudioBlob, releaseMicrophone]);
+  };
 
-  const handleToLangChange = useCallback((next: LangCode) => {
-    setToLang(next);
-  }, []);
+  const handleSpeak = () => {
+    if (!translatedText.trim()) return;
+
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      setErrorMessage("このブラウザは読み上げに対応していません。");
+      setStatus("error");
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(translatedText);
+    utterance.lang = resolveSpeechLang(detectedLanguage);
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
 
   const isRecording = status === "recording";
   const isRequesting = status === "requesting";
-  const isProcessing =
-    status === "processing-speech" || status === "translating";
-  const statusLabel =
-    status === "idle"
-      ? "Idle"
-      : status === "requesting"
-        ? "Requesting microphone"
-      : status === "recording"
-          ? "Recording"
-      : status === "processing-speech"
-            ? "Processing speech"
-      : status === "translating"
-              ? "Translating"
-      : status === "finished"
-                ? "Finished"
-                : "Error";
+  const isBusy =
+    status === "transcribing" ||
+    status === "translating" ||
+    isRequesting;
 
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col bg-white px-5 pb-8 pt-[max(1rem,env(safe-area-inset-top))] sm:max-w-lg">
-      <header className="flex items-center justify-between border-b border-neutral-100 pb-4">
-        <Link
-          href="/"
-          className="text-[11px] tracking-wide text-neutral-400 hover:text-neutral-700"
-        >
-          ← Home
-        </Link>
-        <p className="text-[11px] text-neutral-400">{scenarioLabel}</p>
+      <header className="mb-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-medium tracking-[0.24em] text-neutral-400">
+              CHJ.JP
+            </p>
+            <h1 className="mt-2 text-3xl font-light tracking-tight text-neutral-900">
+              AI Translator
+            </h1>
+          </div>
+          <Link
+            href="/"
+            className="shrink-0 rounded-full border border-neutral-200 px-3 py-1.5 text-[10px] tracking-wide text-neutral-500"
+          >
+            ホーム
+          </Link>
+        </div>
       </header>
 
-      <div className="mt-6 space-y-5">
-        <div className="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50/80 px-3 py-2">
-          <span className="text-[10px] tracking-wide text-neutral-400">Status</span>
-          <div className="flex items-center gap-2">
-            {isRecording ? (
-              <span className="relative inline-flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500/60" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-              </span>
-            ) : null}
-            <span className="text-[12px] font-medium text-neutral-800">{statusLabel}</span>
-          </div>
+      <section aria-label="シーン選択">
+        <p className="text-[10px] tracking-wide text-neutral-400">シーン</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {SCENARIOS.map((scenario) => {
+            const active = context === scenario.id;
+            return (
+              <button
+                key={scenario.id}
+                type="button"
+                onClick={() => setContext(scenario.id)}
+                disabled={isRecording || isBusy}
+                className={`rounded-full border px-3 py-1.5 text-[12px] transition-colors disabled:opacity-40 ${
+                  active
+                    ? "border-neutral-900 bg-neutral-900 text-white"
+                    : "border-neutral-200 bg-white text-neutral-700"
+                }`}
+              >
+                {scenario.label}
+              </button>
+            );
+          })}
         </div>
+      </section>
 
-        <p className="text-[11px] text-neutral-500">
-          Recording duration:{" "}
-          <span className="tabular-nums text-neutral-800">
-            {recordingDurationSec ? recordingDurationSec.toFixed(1) : "0.0"}s
-          </span>
-        </p>
+      <section className="mt-5">
+        <label htmlFor="translate-input" className="text-[10px] tracking-wide text-neutral-400">
+          入力テキスト
+        </label>
+        <textarea
+          id="translate-input"
+          value={inputText}
+          onChange={(event) => setInputText(event.target.value)}
+          rows={4}
+          disabled={isRecording || isBusy}
+          placeholder="翻訳したい文章を入力"
+          className="mt-2 w-full resize-none rounded-2xl border border-neutral-200 bg-white px-3 py-3 text-[14px] leading-relaxed text-neutral-900 outline-none focus:border-neutral-400 disabled:opacity-50"
+        />
+      </section>
 
-        {errorMessage ? (
-          <p
-            role="alert"
-            className="rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-2.5 text-[11px] leading-relaxed text-neutral-700"
-          >
-            {errorMessage}
-          </p>
-        ) : null}
-
-        <div className="space-y-3">
-          <div>
-            <span className="mb-1.5 block text-[10px] tracking-wide text-neutral-400">
-              From
-            </span>
-            <div className="rounded-lg border border-neutral-100 bg-neutral-50/80 px-3 py-2.5 text-[13px] text-neutral-600">
-              Auto Detect
-            </div>
-          </div>
-
-          <label className="block">
-            <span className="mb-1.5 block text-[10px] tracking-wide text-neutral-400">
-              To
-            </span>
-            <select
-              value={toLang}
-              onChange={(e) => handleToLangChange(e.target.value as LangCode)}
-              disabled={isRecording || isRequesting || isProcessing}
-              className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-[13px] text-neutral-900 outline-none focus:border-neutral-400 disabled:opacity-50"
-            >
-              {TARGET_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={startRecording}
-            disabled={isRecording || isRequesting || isProcessing}
-            className={`flex-1 rounded-lg border py-2.5 text-[12px] font-medium tracking-wide text-white disabled:opacity-40 ${
-              isRecording || isRequesting
-                ? "border-red-600 bg-red-600"
-                : "border-neutral-900 bg-neutral-900"
-            }`}
-          >
-            Start Recording
-          </button>
-          <button
-            type="button"
-            onClick={stopRecording}
-            disabled={!isRecording || isProcessing}
-            className="flex-1 rounded-lg border border-neutral-200 py-2.5 text-[12px] tracking-wide text-neutral-700 disabled:opacity-40"
-          >
-            Stop
-          </button>
-        </div>
-
-        <section>
-          <h2 className="text-[10px] tracking-wide text-neutral-400">Transcript</h2>
-          <div className="mt-2 min-h-[72px] rounded-lg border border-neutral-100 bg-neutral-50/50 px-3 py-3 text-[13px] leading-relaxed text-neutral-800">
-            {transcript || "—"}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-[10px] tracking-wide text-neutral-400">Translation</h2>
-          <div className="mt-2 min-h-[72px] rounded-lg border border-neutral-100 bg-neutral-50/50 px-3 py-3 text-[13px] leading-relaxed text-neutral-800">
-            {translation || "—"}
-          </div>
-        </section>
-
-        <p className="text-center text-[10px] leading-relaxed text-neutral-300">
-          Text-to-speech is not enabled yet.
-        </p>
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <button
+          type="button"
+          onClick={() => void translateText(inputText)}
+          disabled={isRecording || isBusy}
+          className="rounded-2xl border border-neutral-900 bg-neutral-900 px-4 py-3 text-[13px] font-medium text-white disabled:opacity-40"
+        >
+          翻訳する
+        </button>
+        <button
+          type="button"
+          onClick={startRecording}
+          disabled={isRecording || isBusy}
+          className="rounded-2xl border border-neutral-200 px-4 py-3 text-[13px] text-neutral-800 disabled:opacity-40"
+        >
+          録音開始
+        </button>
+        <button
+          type="button"
+          onClick={stopRecording}
+          disabled={!isRecording || isBusy}
+          className="rounded-2xl border border-neutral-200 px-4 py-3 text-[13px] text-neutral-800 disabled:opacity-40"
+        >
+          録音停止
+        </button>
       </div>
+
+      {errorMessage ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-[12px] leading-relaxed text-neutral-700"
+        >
+          {errorMessage}
+        </p>
+      ) : null}
+
+      {isRecording ? (
+        <p className="mt-4 text-[12px] text-red-600">録音中...</p>
+      ) : null}
+
+      {isBusy && !isRecording ? (
+        <p className="mt-4 text-[12px] text-neutral-500">
+          {status === "transcribing" ? "音声を認識しています..." : "翻訳しています..."}
+        </p>
+      ) : null}
+
+      <section className="mt-5 rounded-2xl border border-neutral-200 bg-neutral-50/60 px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[10px] tracking-wide text-neutral-400">翻訳結果</h2>
+          {detectedLanguage ? (
+            <span className="text-[10px] text-neutral-500">
+              検出言語: {detectedLanguage}
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-3 min-h-[72px] text-[15px] leading-relaxed text-neutral-900">
+          {translatedText || "翻訳結果がここに表示されます"}
+        </p>
+        <button
+          type="button"
+          onClick={handleSpeak}
+          disabled={!translatedText || isSpeaking}
+          className="mt-4 rounded-full border border-neutral-200 bg-white px-4 py-2 text-[12px] text-neutral-700 disabled:opacity-40"
+        >
+          {isSpeaking ? "読み上げ中..." : "読み上げ"}
+        </button>
+      </section>
 
       <footer className="mt-auto pt-10 text-center text-[10px] tracking-wide text-neutral-300">
         CHJ © 2026

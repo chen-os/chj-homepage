@@ -1,10 +1,11 @@
+import type { Metadata } from "next";
 import { TranslateApp } from "../components/translate-app";
 
-type TranslatePageProps = {
-  searchParams: Promise<{ mode?: string }>;
+export const metadata: Metadata = {
+  title: "AI Translator — CHJ",
+  description: "AI リアルタイム翻訳",
 };
 
-export default async function TranslatePage({ searchParams }: TranslatePageProps) {
-  const { mode } = await searchParams;
-  return <TranslateApp mode={mode} />;
+export default function TranslatePage() {
+  return <TranslateApp />;
 }
