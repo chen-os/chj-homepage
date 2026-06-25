@@ -13,6 +13,8 @@ This file records the current development status and should be updated at the en
 - Japanese to Chinese translation.
 - Translation direction selection.
 - Scene selection for translation context.
+- Kana display for Chinese to Japanese translations.
+- Copy-to-clipboard for translated text.
 - Server-side OpenAI API calls through Next.js API routes.
 
 ## Current Environment
@@ -31,19 +33,20 @@ This file records the current development status and should be updated at the en
 - GitHub CLI authentication identified as the required push path.
 - Development documentation system initialized.
 - Removed the temporary Translate debug panel after verifying the frontend/backend API contract.
+- Added Translate copy-to-clipboard and kana display for Chinese to Japanese output.
 
 ## Known Issues
 
-- Speech, OCR, favorites, history, copy, reading aloud, and explanation modes are not yet complete.
+- Speech, OCR, favorites, history, reading aloud, and explanation modes are not yet complete.
 
 ## Next Priorities
 
 1. Polish Translate output and UX.
-2. Add kana support for Japanese text.
-3. Add explanations for translated phrases.
-4. Add copy-to-clipboard.
-5. Add read-aloud support.
-6. Add favorites and history.
+2. Add explanations for translated phrases.
+3. Add read-aloud support.
+4. Add favorites and history.
+5. Add OCR input.
+6. Add speech input.
 
 ## Development Notes
 

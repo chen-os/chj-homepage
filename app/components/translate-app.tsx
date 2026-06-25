@@ -28,6 +28,7 @@ type TranslateStatus = "idle" | "translating" | "finished" | "error";
 type TranslateResponse = {
   translatedText?: string;
   sourceText?: string;
+  kanaText?: string;
   error?: string;
 };
 
@@ -44,8 +45,10 @@ export function TranslateApp() {
   const [inputText, setInputText] = useState("");
   const [sourceText, setSourceText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
+  const [kanaText, setKanaText] = useState("");
   const [status, setStatus] = useState<TranslateStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [copyMessage, setCopyMessage] = useState("");
 
   const currentDirection =
     DIRECTIONS.find((item) => item.id === direction) ?? DIRECTIONS[0];
@@ -55,8 +58,38 @@ export function TranslateApp() {
     setInputText("");
     setSourceText("");
     setTranslatedText("");
+    setKanaText("");
     setErrorMessage("");
+    setCopyMessage("");
     setStatus("idle");
+  };
+
+  const handleCopyTranslation = async () => {
+    const textToCopy = translatedText.trim();
+
+    if (!textToCopy) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(textToCopy);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = textToCopy;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      setCopyMessage("コピーしました。");
+      window.setTimeout(() => setCopyMessage(""), 1800);
+    } catch {
+      setCopyMessage("コピーできませんでした。");
+      window.setTimeout(() => setCopyMessage(""), 1800);
+    }
   };
 
   const handleTranslate = async () => {
@@ -69,8 +102,10 @@ export function TranslateApp() {
     }
 
     setErrorMessage("");
+    setCopyMessage("");
     setSourceText("");
     setTranslatedText("");
+    setKanaText("");
     setStatus("translating");
 
     try {
@@ -99,6 +134,7 @@ export function TranslateApp() {
 
       setSourceText(data.sourceText?.trim() || trimmed);
       setTranslatedText(data.translatedText.trim());
+      setKanaText(data.kanaText?.trim() ?? "");
       setStatus("finished");
     } catch (error) {
       setStatus("error");
@@ -220,10 +256,33 @@ export function TranslateApp() {
         </div>
 
         <div className="pt-4">
-          <p className="text-xs font-medium text-neutral-400">訳文</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-medium text-neutral-400">訳文</p>
+            <button
+              type="button"
+              onClick={handleCopyTranslation}
+              disabled={!translatedText}
+              className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 disabled:opacity-40"
+            >
+              コピー
+            </button>
+          </div>
+          {copyMessage ? (
+            <p className="mt-2 text-xs text-neutral-500" role="status">
+              {copyMessage}
+            </p>
+          ) : null}
           <p className="mt-2 min-h-20 whitespace-pre-wrap text-base leading-7 text-neutral-950">
             {translatedText || "翻訳結果がここに表示されます。"}
           </p>
+          {direction === "zh-to-ja" && kanaText ? (
+            <div className="mt-4 rounded-lg border border-neutral-200 bg-white px-3 py-3">
+              <p className="text-xs font-medium text-neutral-400">かな</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-700">
+                {kanaText}
+              </p>
+            </div>
+          ) : null}
         </div>
       </section>
 

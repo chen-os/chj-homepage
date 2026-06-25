@@ -25,6 +25,7 @@ type TranslateRequestBody = {
 type TranslateResponseBody = {
   sourceText: string;
   translatedText: string;
+  kanaText?: string;
 };
 
 type OpenAIResponseOutputContent = {
@@ -97,6 +98,8 @@ function parseTranslateResponse(raw: string): TranslateResponseBody | null {
       return {
         sourceText: parsed.sourceText.trim(),
         translatedText: parsed.translatedText.trim(),
+        kanaText:
+          typeof parsed.kanaText === "string" ? parsed.kanaText.trim() : "",
       };
     }
   } catch {
@@ -167,6 +170,7 @@ export async function POST(request: Request) {
               "Translate naturally and conversationally, suitable for everyday messages.",
               "Keep the meaning faithful, but choose phrases that sound normal to native speakers.",
               "Do not add explanations, notes, honorific analysis, or alternatives.",
+              "When translating from Chinese to Japanese, include kanaText with the Japanese reading in natural hiragana. When translating from Japanese to Chinese, kanaText must be an empty string.",
               "Return only valid JSON that matches the provided schema.",
             ].join(" "),
           },
@@ -192,8 +196,9 @@ export async function POST(request: Request) {
               properties: {
                 sourceText: { type: "string" },
                 translatedText: { type: "string" },
+                kanaText: { type: "string" },
               },
-              required: ["sourceText", "translatedText"],
+              required: ["sourceText", "translatedText", "kanaText"],
             },
             strict: true,
           },
@@ -236,6 +241,7 @@ export async function POST(request: Request) {
     return Response.json({
       sourceText: parsed.sourceText || text,
       translatedText: parsed.translatedText,
+      kanaText: parsed.kanaText ?? "",
     });
   } catch (error) {
     console.error("Translate route failed:", error);

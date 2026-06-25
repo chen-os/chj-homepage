@@ -16,6 +16,8 @@ The Translate module provides daily-life Chinese-Japanese text translation for `
 - Translation direction selection.
 - Scene selection for translation context.
 - Text input.
+- Kana display for Chinese to Japanese output.
+- Copy-to-clipboard for translated text.
 - Server-side OpenAI API calls.
 - User-facing error handling.
 - Production UI without temporary debug output.
@@ -50,6 +52,7 @@ Current JSON contract:
 {
   sourceText: string;
   translatedText: string;
+  kanaText?: string;
 }
 
 // Error response
@@ -60,13 +63,11 @@ Current JSON contract:
 
 ## Current Status
 
-The text translation workflow is the current stable feature of the project. The temporary frontend debug panel has been removed, and the page now relies on the stable `/api/translate` JSON contract.
+The text translation workflow is the current stable feature of the project. The page relies on the stable `/api/translate` JSON contract and includes a backward-compatible optional `kanaText` field for Chinese to Japanese translations.
 
 ## Next Steps
 
-- Kana support.
 - Phrase explanations.
-- Copy-to-clipboard.
 - Read-aloud support.
 - Favorites.
 - History.
