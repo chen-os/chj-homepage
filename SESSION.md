@@ -30,10 +30,10 @@ This file records the current development status and should be updated at the en
 - iMac / MacBook development workflow clarified.
 - GitHub CLI authentication identified as the required push path.
 - Development documentation system initialized.
+- Removed the temporary Translate debug panel after verifying the frontend/backend API contract.
 
 ## Known Issues
 
-- The temporary Translate debug block may still exist and should be removed after the API contract is fully verified in production.
 - Speech, OCR, favorites, history, copy, reading aloud, and explanation modes are not yet complete.
 
 ## Next Priorities

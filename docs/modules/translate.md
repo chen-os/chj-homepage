@@ -18,6 +18,7 @@ The Translate module provides daily-life Chinese-Japanese text translation for `
 - Text input.
 - Server-side OpenAI API calls.
 - User-facing error handling.
+- Production UI without temporary debug output.
 
 ## Scenes
 
@@ -59,7 +60,7 @@ Current JSON contract:
 
 ## Current Status
 
-The text translation workflow is the current stable feature of the project.
+The text translation workflow is the current stable feature of the project. The temporary frontend debug panel has been removed, and the page now relies on the stable `/api/translate` JSON contract.
 
 ## Next Steps
 

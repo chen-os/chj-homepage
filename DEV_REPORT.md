@@ -6,70 +6,50 @@
 
 ## 最新报告
 
-**报告编号：** #010
+**报告编号：** #011
 **最后更新：** 2026-06-25
 **分支：** main
-**更新者：** Codex — Development Documentation System
+**更新者：** Codex — Translate Debug Panel Removal
 
 ### 当前目标
 
-在 `~/Projects/chj-homepage` 中初始化项目文档体系，只创建/更新 Markdown 文档，不修改应用源码。
+移除 `/translate` 页面中的临时 Debug 区块和相关 debug state，保持现有翻译功能、错误提示和 `/api/translate` contract 不变。
 
 ### 修改文件
 
-**新增 / 修改**
+**修改**
 
-- `README.md` — 项目入口文档
-- `CHANGELOG.md` — 项目变更记录
-- `SESSION.md` — 当前开发状态
-- `docs/DEVELOPMENT.md` — 开发流程
-- `docs/PROJECT.md` — 项目愿景与架构
-- `docs/ROADMAP.md` — 产品路线图
-- `docs/CODING_STYLE.md` — 编码规范
-- `docs/AI_RULES.md` — AI 开发者规则
-- `docs/modules/translate.md` — Translate 模块文档
-- `docs/decisions/2026-06-25-development-workflow.md` — 开发流程决策记录
+- `app/components/translate-app.tsx` — 移除临时 Debug 区块和 debug state
+- `SESSION.md` — 更新当前状态，记录 Debug 区块已移除
+- `docs/modules/translate.md` — 更新 Translate 模块状态
 - `DEV_REPORT.md` — 本报告
 
 ### 修改说明
 
-- 建立完整项目文档体系，明确 GitHub 是唯一源码来源。
-- 记录 iMac / MacBook 通过 GitHub 同步的开发模式。
-- 记录 Vercel 自动部署、OpenAI API、Translate 当前状态和后续路线。
-- 明确不使用 patch、AirDrop、Google Drive 传源码，不使用 Cursor 作为主开发工具。
-- 根 `README.md` 从默认 Next.js 模板更新为 CHJ 项目入口。
+- 删除 `debugResponse` state。
+- 删除 fetch 后保存 debug JSON 的逻辑。
+- 删除页面底部 `<details>` Debug 区块。
+- 保留 `TRANSLATE_ENDPOINT`、`fetch("/api/translate")`、request body、response parsing、错误提示和 UI 主流程。
+- 本地没有 `OPENAI_API_KEY`，因此验证到页面可访问与 API contract 命中；真实译文返回依赖已配置 key 的部署环境。
 
 ### git status
 
 ```
 ## main...origin/main
  M DEV_REPORT.md
- M README.md
-?? CHANGELOG.md
-?? SESSION.md
-?? docs/
+ M SESSION.md
+ M app/components/translate-app.tsx
+ M docs/modules/translate.md
 ```
 
 ### git diff --stat
 
 ```
- DEV_REPORT.md | 138 ++++++++++++----------------------------------------------
- README.md     |  97 ++++++++++++++++++++++++++++++++---------
- 2 files changed, 106 insertions(+), 129 deletions(-)
-```
-
-未跟踪新增文档：
-
-```
-CHANGELOG.md
-SESSION.md
-docs/AI_RULES.md
-docs/CODING_STYLE.md
-docs/DEVELOPMENT.md
-docs/PROJECT.md
-docs/ROADMAP.md
-docs/decisions/2026-06-25-development-workflow.md
-docs/modules/translate.md
+ DEV_REPORT.md                    | 84 ++++++++++++++++------------------------
+ SESSION.md                       |  2 +-
+ app/components/translate-app.tsx | 20 ----------
+ docs/modules/translate.md        |  3 +-
+ 4 files changed, 37 insertions(+), 72 deletions(-)
 ```
 
 **staged diff：** 无
@@ -77,10 +57,6 @@ docs/modules/translate.md
 ### npm run build 结果
 
 ```
-当前 Codex shell 没有 npm 命令，且仓库初始没有 node_modules。
-为验证构建，使用 Codex bundled Node + 项目依赖下的 Next 可执行文件运行 production build：
-PATH=/Users/CHJ/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH ./node_modules/.bin/next build
-
 ✓ 成功（exit code 0）
 ▲ Next.js 16.2.6 (Turbopack)
 ✓ Compiled successfully
@@ -88,16 +64,24 @@ PATH=/Users/CHJ/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bi
 ✓ Generating static pages (26/26)
 ```
 
+本地验证：
+
+```
+GET /translate -> 200 OK
+POST /api/translate with valid direction -> reached /api/translate contract;
+local response is expected 500 because OPENAI_API_KEY is not set locally.
+```
+
 ### 已知问题
 
-- 当前环境没有 `npm` 命令，因此无法逐字执行 `npm run build`；已完成等价 production build 验证。
-- 本次任务只处理文档；应用代码未改动。
+- 本地环境没有 `OPENAI_API_KEY`，无法在本机完成真实 OpenAI 译文返回测试。
+- Debug 区块已移除；如后续还需线上排查，应使用服务端日志或临时分支。
 
 ### 下一步建议
 
-1. 在本机标准开发环境中确认 `npm install` / `npm run build` 可直接执行。
-2. 后续开发会话结束时持续更新 `SESSION.md`。
-3. 重要架构和流程变化继续记录到 `docs/decisions/`。
+1. 在 Vercel 部署环境确认 `/translate` 真实翻译仍正常。
+2. 继续优化 Translate：假名、解释、复制、朗读。
+3. 后续开发会话结束时持续更新 `SESSION.md`。
 
 ---
 

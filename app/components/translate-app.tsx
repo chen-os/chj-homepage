@@ -46,9 +46,6 @@ export function TranslateApp() {
   const [translatedText, setTranslatedText] = useState("");
   const [status, setStatus] = useState<TranslateStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
-  const [debugResponse, setDebugResponse] = useState<TranslateResponse | null>(
-    null,
-  );
 
   const currentDirection =
     DIRECTIONS.find((item) => item.id === direction) ?? DIRECTIONS[0];
@@ -59,7 +56,6 @@ export function TranslateApp() {
     setSourceText("");
     setTranslatedText("");
     setErrorMessage("");
-    setDebugResponse(null);
     setStatus("idle");
   };
 
@@ -75,7 +71,6 @@ export function TranslateApp() {
     setErrorMessage("");
     setSourceText("");
     setTranslatedText("");
-    setDebugResponse(null);
     setStatus("translating");
 
     try {
@@ -91,7 +86,6 @@ export function TranslateApp() {
       });
 
       const data = await readTranslateResponse(response);
-      setDebugResponse(data);
 
       if (!response.ok) {
         throw new Error(
@@ -236,20 +230,6 @@ export function TranslateApp() {
       <p className="mt-5 text-xs leading-5 text-neutral-400">
         音声入力は準備中です。まずはテキスト翻訳を安定版として提供しています。
       </p>
-
-      <details className="mt-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
-        <summary className="cursor-pointer font-medium text-neutral-600">
-          Debug
-        </summary>
-        <div className="mt-2 space-y-2">
-          <p>Endpoint: {TRANSLATE_ENDPOINT}</p>
-          <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-md bg-white p-2 text-[11px] leading-5 text-neutral-700">
-            {debugResponse
-              ? JSON.stringify(debugResponse, null, 2)
-              : "No response yet."}
-          </pre>
-        </div>
-      </details>
     </main>
   );
 }
